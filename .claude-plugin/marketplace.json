@@ -1,0 +1,19 @@
+{
+  "name": "lguidolin-agent-skills",
+  "owner": {
+    "name": "lguidolin"
+  },
+  "metadata": {
+    "description": "Skills for repository automation setup (conventional commits, release-please, CI) and commit history rewriting."
+  },
+  "plugins": [
+    {
+      "name": "lguidolin-agent-skills",
+      "source": {
+        "source": "github",
+        "repo": "lguidolin/agent-skills"
+      },
+      "description": "Repository automation and commit history management skills for AI coding agents."
+    }
+  ]
+}

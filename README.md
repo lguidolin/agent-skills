@@ -1,6 +1,6 @@
 # Agent Skills
 
-Custom skills for AI coding agents. Designed for GitHub Copilot, compatible with any agent that accepts markdown instruction files.
+Custom skills for AI coding agents. Designed for GitHub Copilot and Claude Code, compatible with any agent that accepts markdown instruction files.
 
 ## Skills
 
@@ -18,50 +18,75 @@ These skill libraries are recommended companions — install them alongside this
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | 20 production engineering skills + agent personas (code-reviewer, test-engineer, security-auditor) |
 | [obra/superpowers](https://github.com/obra/superpowers) | Workflow skills (brainstorming, TDD, systematic debugging, subagent-driven development, code review) |
 
-## Installation
+## Quick Start
 
-### GitHub Copilot (per-repo)
+<details>
+<summary><b>Claude Code</b></summary>
+
+**Marketplace install:**
+
+```
+/plugin marketplace add lguidolin/agent-skills
+/plugin install lguidolin-agent-skills@lguidolin-agent-skills
+```
+
+> **SSH errors?** The marketplace clones repos via SSH. If you don't have SSH keys configured:
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+
+**Local / development:**
 
 ```bash
-mkdir -p .github/skills
+git clone https://github.com/lguidolin/agent-skills.git
+claude --plugin-dir /path/to/agent-skills
+```
 
-# Install this repo
+See [docs/claude-code-setup.md](docs/claude-code-setup.md) for details.
+
+</details>
+
+<details>
+<summary><b>GitHub Copilot</b></summary>
+
+Copy skills into your project's `.github/skills/` directory:
+
+```bash
 git clone https://github.com/lguidolin/agent-skills.git /tmp/lguidolin-agent-skills
-ln -s /tmp/lguidolin-agent-skills/skills .github/skills/lguidolin-agent-skills
-
-# Install dependencies (recommended)
-git clone https://github.com/addyosmani/agent-skills.git /tmp/addyosmani-agent-skills
-ln -s /tmp/addyosmani-agent-skills/skills .github/skills/agent-skills
-cp /tmp/addyosmani-agent-skills/agents/*.md .github/agents/
-
-git clone https://github.com/obra/superpowers.git /tmp/superpowers
-ln -s /tmp/superpowers/skills .github/skills/superpowers
-cp /tmp/superpowers/agents/*.md .github/agents/
+mkdir -p .github/skills
+cp -r /tmp/lguidolin-agent-skills/skills/* .github/skills/
 ```
 
-### Global (all repos)
+This installs:
+- `.github/skills/repo-automation-setup/SKILL.md`
+- `.github/skills/commit-history-rewrite/SKILL.md`
+
+See [docs/copilot-setup.md](docs/copilot-setup.md) for details.
+
+</details>
+
+<details>
+<summary><b>Other Agents</b></summary>
+
+Skills are plain Markdown — they work with any agent that accepts system prompts or instruction files. Copy the relevant `SKILL.md` into your agent's rules directory, or paste the content into your system prompt.
 
 ```bash
-mkdir -p ~/.copilot-assets/repos ~/.agents/skills
-
-# Install this repo
-git clone https://github.com/lguidolin/agent-skills.git ~/.copilot-assets/repos/lguidolin-agent-skills
-ln -s ~/.copilot-assets/repos/lguidolin-agent-skills/skills ~/.agents/skills/lguidolin-agent-skills
-
-# Install dependencies (recommended)
-git clone https://github.com/addyosmani/agent-skills.git ~/.copilot-assets/repos/agent-skills
-ln -s ~/.copilot-assets/repos/agent-skills/skills ~/.agents/skills/agent-skills
-
-git clone https://github.com/obra/superpowers.git ~/.copilot-assets/repos/superpowers
-ln -s ~/.copilot-assets/repos/superpowers/skills ~/.agents/skills/superpowers
+git clone https://github.com/lguidolin/agent-skills.git
+# Then copy skills/<name>/SKILL.md to your agent's rules location
 ```
 
-### Update
+</details>
 
-```bash
-cd ~/.copilot-assets/repos/lguidolin-agent-skills && git pull
-cd ~/.copilot-assets/repos/agent-skills && git pull
-cd ~/.copilot-assets/repos/superpowers && git pull
+## Project Structure
+
+```
+agent-skills/
+├── skills/                       # Core skills (SKILL.md per directory)
+│   ├── repo-automation-setup/    #   Conventional commits + release-please + CI
+│   └── commit-history-rewrite/   #   Rewrite messy history to conventional commits
+├── .claude-plugin/               # Claude Code plugin manifest
+├── .claude/commands/             # Claude Code slash commands
+└── docs/                         # Setup guides per tool
 ```
 
 ## Acknowledgments

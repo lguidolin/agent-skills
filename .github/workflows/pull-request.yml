@@ -1,0 +1,78 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+  statuses: write
+
+jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            test
+            ci
+          requireScope: false
+          subjectPattern: ^[a-z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            starts with a lowercase character (per conventional commits).
+
+  auto-label:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label based on PR title
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const labelMap = {
+              'feat': 'enhancement',
+              'fix': 'bug',
+              'docs': 'documentation',
+              'chore': 'chore',
+              'refactor': 'refactor',
+              'test': 'test',
+              'ci': 'ci'
+            };
+            for (const [type, label] of Object.entries(labelMap)) {
+              if (title.startsWith(`${type}:`) || title.startsWith(`${type}(`)) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: [label]
+                });
+                break;
+              }
+            }
+
+  ci-checks:
+    name: CI Checks
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate YAML syntax
+        run: |
+          sudo apt-get update && sudo apt-get install -y yamllint
+          find . -name "*.yml" -o -name "*.yaml" | while read file; do
+            echo "Checking $file"
+            yamllint -d "{extends: default, rules: {line-length: disable}}" "$file" || true
+          done

@@ -1,0 +1,12 @@
+{
+  "name": "lguidolin-agent-skills",
+  "description": "Skills for repository automation setup (conventional commits, release-please, CI) and commit history rewriting.",
+  "version": "1.0.0",
+  "author": {
+    "name": "lguidolin"
+  },
+  "homepage": "https://github.com/lguidolin/agent-skills",
+  "repository": "https://github.com/lguidolin/agent-skills",
+  "license": "GPL-3.0",
+  "commands": "./.claude/commands"
+}
