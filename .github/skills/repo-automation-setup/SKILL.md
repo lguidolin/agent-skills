@@ -347,7 +347,23 @@ Recommended GitHub branch protection settings for {{DEFAULT_BRANCH}}:
 
 **Why squash merge:** Branch history (WIP commits, fixups, experiments) is preserved in the PR. Main gets a clean, meaningful, linear log where every commit is a conventional commit. This is what makes release-please and `git log --oneline` useful.
 
-### Step 5: Verify
+### Step 5: Enable Workflow Permissions
+
+Release-please needs permission to create pull requests via GitHub Actions. This is **disabled by default** on new repositories and will cause the Release Automation workflow to fail with:
+
+> `GitHub Actions is not permitted to create or approve pull requests.`
+
+Instruct the user to enable this setting:
+
+```
+GitHub repo → Settings → Actions → General → Workflow permissions:
+  ✓ Read and write permissions (required for release-please to push changelog commits)
+  ✓ Allow GitHub Actions to create and approve pull requests (required for release PRs)
+```
+
+This step must be completed before the first push to `{{DEFAULT_BRANCH}}`, or release-please will fail on every push until it's enabled.
+
+### Step 6: Verify
 
 ```bash
 # Validate YAML syntax
@@ -363,7 +379,7 @@ ls -la .github/workflows/pull-request.yml .github/workflows/main-branch.yml \
        .github/dependabot.yml .github/pull_request_template.md docs/DEVELOPMENT.md
 ```
 
-### Step 6: Bootstrap Strategy (Existing Repos)
+### Step 7: Bootstrap Strategy (Existing Repos)
 
 For repos with existing content, the file creation must be done carefully:
 
