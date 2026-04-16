@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/lguidolin/agent-skills/compare/v0.2.0...v0.3.0) (2026-04-16)
+
+
+### Features
+
+* add branch-push-pr skill for full git workflow cycle ([30110e6](https://github.com/lguidolin/agent-skills/commit/30110e6e28abb18ee3366e1c1bb2df327d1d4fd3))
+* add branch-push-pr skill for full git workflow cycle ([303dd5d](https://github.com/lguidolin/agent-skills/commit/303dd5db9d90da13c179524fa9b7d7b771187ebf))
+
 ## [0.2.0](https://github.com/lguidolin/agent-skills/compare/v0.1.0...v0.2.0) (2026-04-15)
 
 
