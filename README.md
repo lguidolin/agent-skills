@@ -61,7 +61,7 @@ This installs:
 - `.github/skills/repo-automation-setup/SKILL.md`
 - `.github/skills/commit-history-rewrite/SKILL.md`
 
-See [docs/copilot-setup.md](docs/copilot-setup.md) for details.
+> **Companion skills and permissions:** The setup guide covers installing the recommended companion skill repos listed in [Dependencies](#dependencies), plus the GitHub repository permissions needed for the automation workflows to function. See [docs/copilot-setup.md](docs/copilot-setup.md) for the full walkthrough.
 
 </details>
 
