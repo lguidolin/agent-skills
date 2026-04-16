@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/lguidolin/agent-skills/compare/v0.3.0...v0.3.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* update release-please-action from deprecated google-github-actions to googleapis ([#6](https://github.com/lguidolin/agent-skills/issues/6)) ([0caf1ea](https://github.com/lguidolin/agent-skills/commit/0caf1ea9d92609fa087cb500a2daeae9063c4076))
+
 ## [0.3.0](https://github.com/lguidolin/agent-skills/compare/v0.2.0...v0.3.0) (2026-04-16)
 
 
