@@ -23,14 +23,16 @@ claude --plugin-dir /path/to/agent-skills
 
 ## Slash Commands
 
-Once installed, two slash commands are available:
+Once installed, three slash commands are available:
 
 | Command | Skill |
 |---------|-------|
 | `/setup-repo` | repo-automation-setup |
 | `/rewrite-history` | commit-history-rewrite |
+| `/push` | branch-push-pr |
 
 ## Usage
 
 - **Set up automation:** `/setup-repo` or ask Claude to set up conventional commits and release-please
 - **Rewrite history:** `/rewrite-history` or ask Claude to clean up commit history to conventional commits
+- **Push changes:** `/push` or ask Claude to commit, push, and open a PR

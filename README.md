@@ -8,6 +8,7 @@ Custom skills for AI coding agents. Designed for GitHub Copilot and Claude Code,
 |-------|----------|
 | [repo-automation-setup](skills/repo-automation-setup/SKILL.md) | Setting up conventional commits, release-please, PR validation, and CI automation in any repository |
 | [commit-history-rewrite](skills/commit-history-rewrite/SKILL.md) | Rewriting messy commit history to conform to conventional commits before adopting release-please |
+| [branch-push-pr](skills/branch-push-pr/SKILL.md) | Pushing changes through the branch → commit → push → PR workflow with conventional commit messages |
 
 ## Dependencies
 
@@ -60,6 +61,7 @@ cp -r /tmp/lguidolin-agent-skills/skills/* .github/skills/
 This installs:
 - `.github/skills/repo-automation-setup/SKILL.md`
 - `.github/skills/commit-history-rewrite/SKILL.md`
+- `.github/skills/branch-push-pr/SKILL.md`
 
 > **Companion skills and permissions:** The setup guide covers installing the recommended companion skill repos listed in [Dependencies](#dependencies), plus the GitHub repository permissions needed for the automation workflows to function. See [docs/copilot-setup.md](docs/copilot-setup.md) for the full walkthrough.
 
@@ -83,7 +85,8 @@ git clone https://github.com/lguidolin/agent-skills.git
 agent-skills/
 ├── skills/                       # Core skills (SKILL.md per directory)
 │   ├── repo-automation-setup/    #   Conventional commits + release-please + CI
-│   └── commit-history-rewrite/   #   Rewrite messy history to conventional commits
+│   ├── commit-history-rewrite/   #   Rewrite messy history to conventional commits
+│   └── branch-push-pr/           #   Branch + commit + push + PR workflow
 ├── .claude-plugin/               # Claude Code plugin manifest
 ├── .claude/commands/             # Claude Code slash commands
 └── docs/                         # Setup guides per tool
