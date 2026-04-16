@@ -18,6 +18,7 @@ cp -r /tmp/lguidolin-agent-skills/skills/* .github/skills/
 This installs:
 - `.github/skills/repo-automation-setup/SKILL.md`
 - `.github/skills/commit-history-rewrite/SKILL.md`
+- `.github/skills/branch-push-pr/SKILL.md`
 
 ### Recommended Companion Skills
 
@@ -93,5 +94,6 @@ After copying, confirm the skills appear when you type `/` in Copilot Chat. You 
 
 - **Set up automation:** Ask Copilot to set up conventional commits and release-please, or invoke `/repo-automation-setup`
 - **Rewrite history:** Ask Copilot to clean up commit history, or invoke `/commit-history-rewrite`
+- **Push changes:** Ask Copilot to push your changes, or invoke `/branch-push-pr`
 
 Skills also activate automatically when Copilot detects a relevant task based on the skill's `description` field.
