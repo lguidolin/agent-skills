@@ -134,6 +134,10 @@ Examples:
 
 The type prefix should match the commit type. The description uses kebab-case, is short (2-4 words), and describes the change.
 
+**Propose the branch name to the user and confirm before creating.** Example:
+
+> Proposed branch name: `feat/oauth-login`
+
 ```bash
 git checkout -b <type>/<short-description>
 ```
@@ -178,6 +182,19 @@ If the push fails due to authentication, help the user troubleshoot:
 
 [Explain the motivation — why was this change needed? What problem does it solve?]
 ```
+
+**Present the full PR proposal to the user and confirm before creating.** Show the title and body together:
+
+> **PR title:** `feat: add OAuth2 login flow`
+>
+> **PR body:**
+> ## What changed
+> Added OAuth2 authentication with Google and GitHub providers...
+>
+> ## Why
+> Users need SSO login to avoid managing separate credentials...
+
+Wait for the user to approve or suggest changes before proceeding.
 
 **Create the PR** using whichever method is available:
 
