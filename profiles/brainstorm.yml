@@ -1,0 +1,26 @@
+name: brainstorm
+description: "Ideation, spec writing, and design exploration"
+
+skills:
+  - brainstorming
+  - idea-refine
+  - spec-driven-development
+  - planning-and-task-breakdown
+  - writing-plans
+  - context-engineering
+  - documentation-and-adrs
+
+mcps:
+  - context7
+
+claudeignore:
+  - "src/**"
+  - "tests/**"
+  - "dist/**"
+  - "build/**"
+  - "node_modules/**"
+  - "docs/superpowers/archive/**"
+
+hooks:
+  pre_session: true
+  post_session: false

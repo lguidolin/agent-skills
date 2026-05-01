@@ -1,0 +1,17 @@
+name: ship
+description: "Push, PR, archive decisions, merge cleanup"
+
+skills:
+  - ship-it
+  - finishing-a-development-branch
+  - code-review-and-quality
+
+mcps:
+  - context7
+
+claudeignore:
+  - "docs/superpowers/archive/**"
+
+hooks:
+  pre_session: true
+  post_session: true

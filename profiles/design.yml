@@ -1,0 +1,24 @@
+name: design
+description: "UI/UX design, mockups, and visual work"
+
+skills:
+  - frontend-ui-engineering
+  - browser-testing-with-devtools
+  - brainstorming
+  - spec-driven-development
+  - writing-plans
+
+mcps:
+  - context7
+  - browser
+
+claudeignore:
+  - "tests/**"
+  - "dist/**"
+  - "build/**"
+  - "node_modules/**"
+  - "docs/superpowers/archive/**"
+
+hooks:
+  pre_session: true
+  post_session: false

@@ -1,0 +1,21 @@
+name: code
+description: "Implementation, debugging, testing, and committing"
+
+skills:
+  - incremental-implementation
+  - test-driven-development
+  - systematic-debugging
+  - debugging-and-error-recovery
+  - git-workflow-and-versioning
+  - security-and-hardening
+  - verification-before-completion
+
+mcps:
+  - context7
+
+claudeignore:
+  - "docs/superpowers/archive/**"
+
+hooks:
+  pre_session: true
+  post_session: false

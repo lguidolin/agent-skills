@@ -1,5 +1,5 @@
 ---
-name: repo-automation-setup
+name: init-repo-CI
 description: Use when setting up a new repository with conventional commits, release-please, and CI automation, or when retrofitting an existing repository that lacks automated versioning and PR validation workflows.
 ---
 

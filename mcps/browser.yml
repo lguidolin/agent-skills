@@ -1,0 +1,6 @@
+name: browser
+description: "Browser automation and visual testing via DevTools"
+install: "claude mcp add browser -- npx -y @anthropic/mcp-browser"
+remove: "claude mcp remove browser"
+profiles: [design, code]
+languages: []
