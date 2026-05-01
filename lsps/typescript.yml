@@ -1,0 +1,4 @@
+name: typescript
+description: "TypeScript/JavaScript language intelligence"
+install: "npm install -g typescript-language-server typescript"
+detect: ["package.json", "tsconfig.json"]

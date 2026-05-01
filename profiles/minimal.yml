@@ -1,0 +1,12 @@
+name: minimal
+description: "Dormant state — no skills, no MCPs, no ignore patterns"
+
+skills: []
+
+mcps: []
+
+claudeignore: []
+
+hooks:
+  pre_session: false
+  post_session: false

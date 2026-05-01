@@ -1,0 +1,4 @@
+name: python
+description: "Python language intelligence (pylsp)"
+install: "pip install python-lsp-server[all]"
+detect: ["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"]

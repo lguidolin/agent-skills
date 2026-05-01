@@ -1,0 +1,6 @@
+name: context7
+description: "Documentation lookup for any library/framework"
+install: "claude mcp add context7 -- npx -y @upstash/context7-mcp"
+remove: "claude mcp remove context7"
+profiles: [brainstorm, design, code, ship]
+languages: []

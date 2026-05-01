@@ -1,104 +1,245 @@
 # Agent Skills
 
-Custom skills for AI coding agents. Designed for GitHub Copilot and Claude Code, compatible with any agent that accepts markdown instruction files.
+Token-efficient context management for Claude Code.
 
-## Skills
-
-| Skill | Use When |
-|-------|----------|
-| [repo-automation-setup](skills/repo-automation-setup/SKILL.md) | Setting up conventional commits, release-please, PR validation, and CI automation in any repository |
-| [commit-history-rewrite](skills/commit-history-rewrite/SKILL.md) | Rewriting messy commit history to conform to conventional commits before adopting release-please |
-| [branch-push-pr](skills/branch-push-pr/SKILL.md) | Pushing changes through the branch → commit → push → PR workflow with conventional commit messages |
-
-## Dependencies
-
-These skill libraries are recommended companions — install them alongside this repo for a complete workflow:
-
-| Repo | What it provides |
-|------|-----------------|
-| [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | 20 production engineering skills + agent personas (code-reviewer, test-engineer, security-auditor) |
-| [obra/superpowers](https://github.com/obra/superpowers) | Workflow skills (brainstorming, TDD, systematic debugging, subagent-driven development, code review) |
+Manage your Claude Code sessions with profile-based skill loading, MCP/LSP configuration, document lifecycle automation, and `.claudeignore` hygiene — all through simple `just` commands.
 
 ## Quick Start
 
-<details>
-<summary><b>Claude Code</b></summary>
+1. **Clone this repo** wherever you keep tools:
+   ```bash
+   git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
+   ```
 
-**Marketplace install:**
+2. **Set the environment variable** in your shell config (`.zshrc`, `.bashrc`):
+   ```bash
+   export AGENT_SKILLS_DIR="$HOME/local/agent-skills"
+   ```
 
-```
-/plugin marketplace add lguidolin/agent-skills
-/plugin install lguidolin-agent-skills@lguidolin-agent-skills
-```
+3. **Import into your project's Justfile:**
+   ```justfile
+   import "~/local/agent-skills/Justfile"
+   ```
 
-> **SSH errors?** The marketplace clones repos via SSH. If you don't have SSH keys configured:
-> ```bash
-> git config --global url."https://github.com/".insteadOf "git@github.com:"
-> ```
+   Or run the interactive setup:
+   ```bash
+   just claude-init
+   ```
 
-**Local / development:**
+4. **Activate a profile:**
+   ```bash
+   just claude-brainstorm   # ideation mode
+   just claude-code         # implementation mode
+   ```
+
+## How It Works
+
+This repo is both a **skill library** and a **context management toolkit**. Claude Code auto-discovers skills from `.github/skills/` in your project. This toolkit manages which skills are visible via symlinks — only the skills relevant to your current activity get linked, reducing token consumption.
+
+### The Problem
+
+Claude Code loads all discovered skills into context, consuming tokens regardless of relevance. A brainstorming session doesn't need debugging skills. A coding session doesn't need deployment skills. Specs written for humans are verbose when an LLM just needs decisions.
+
+### The Solution
+
+- **Profiles** define which skills, MCPs, and ignore patterns apply to each activity
+- **Symlinks** make only active skills visible to Claude Code
+- **`.claudeignore`** prevents irrelevant files from being read
+- **Decision records** replace verbose specs with compact LLM-optimized summaries
+
+## Profiles
+
+| Profile | Purpose | Typical Skills |
+|---------|---------|----------------|
+| `brainstorm` | Ideation, specs, plans | brainstorming, writing-plans, spec-driven-dev |
+| `design` | UI/UX, mockups, visual work | frontend-ui-engineering, browser-testing |
+| `code` | Implementation, debug, test | TDD, debugging, incremental-implementation |
+| `ship` | Push, PR, archive, cleanup | ship-it, finishing-a-dev-branch |
+| `minimal` | Dormant — nothing loaded | (none) |
+
+Activate with: `just claude-<profile>`
+
+### Per-Skill Overrides
+
+Layer individual skills on top of any profile:
 
 ```bash
-git clone https://github.com/lguidolin/agent-skills.git
-claude --plugin-dir /path/to/agent-skills
+just claude-add-skill performance-optimization
+just claude-rm-skill security-and-hardening
 ```
 
-See [docs/claude-code-setup.md](docs/claude-code-setup.md) for details.
+Overrides reset when you switch profiles.
 
-</details>
+### Project-Level Customization
 
-<details>
-<summary><b>GitHub Copilot</b></summary>
+Create `.claude-profiles.yml` in your project to customize profiles:
 
-Copy skills into your project's `.github/skills/` directory:
+```yaml
+# MCPs always active for this project
+mcps:
+  - typescript-lsp
+  - postgres
 
-```bash
-git clone https://github.com/lguidolin/agent-skills.git /tmp/lguidolin-agent-skills
-mkdir -p .github/skills
-cp -r /tmp/lguidolin-agent-skills/skills/* .github/skills/
+# Per-profile overrides
+code:
+  skills_add:
+    - frontend-ui-engineering
+  mcps_add:
+    - browser
 ```
 
-This installs:
-- `.github/skills/repo-automation-setup/SKILL.md`
-- `.github/skills/commit-history-rewrite/SKILL.md`
-- `.github/skills/branch-push-pr/SKILL.md`
+## Commands
 
-> **Companion skills and permissions:** The setup guide covers installing the recommended companion skill repos listed in [Dependencies](#dependencies), plus the GitHub repository permissions needed for the automation workflows to function. See [docs/copilot-setup.md](docs/copilot-setup.md) for the full walkthrough.
+### Profiles
 
-</details>
+| Command | Description |
+|---------|-------------|
+| `just claude-brainstorm` | Activate brainstorm profile |
+| `just claude-design` | Activate design profile |
+| `just claude-code` | Activate code profile |
+| `just claude-ship` | Activate ship profile |
+| `just claude-minimal` | Deactivate all |
+| `just claude-active-profile` | Show current profile |
 
-<details>
-<summary><b>Other Agents</b></summary>
+### Skills
 
-Skills are plain Markdown — they work with any agent that accepts system prompts or instruction files. Copy the relevant `SKILL.md` into your agent's rules directory, or paste the content into your system prompt.
+| Command | Description |
+|---------|-------------|
+| `just claude-list-skills` | All skills + profile associations |
+| `just claude-list-active-skills` | Currently active skills |
+| `just claude-add-skill <name>` | Add skill to current profile |
+| `just claude-rm-skill <name>` | Remove skill from current profile |
 
-```bash
-git clone https://github.com/lguidolin/agent-skills.git
-# Then copy skills/<name>/SKILL.md to your agent's rules location
+### MCPs
+
+| Command | Description |
+|---------|-------------|
+| `just claude-list-mcps` | All available MCPs |
+| `just claude-list-active-mcps` | MCPs for this project |
+| `just claude-add-mcp <name>` | Add + install MCP |
+| `just claude-rm-mcp <name>` | Remove MCP |
+
+### LSPs
+
+| Command | Description |
+|---------|-------------|
+| `just claude-list-lsps` | All available LSPs |
+| `just claude-setup-lsp <name>` | Install an LSP server |
+
+### Docs & Archive
+
+| Command | Description |
+|---------|-------------|
+| `just claude-update-archive` | Find unconverted specs, generate prompt |
+| `just claude-rebuild-index` | Rebuild decision index |
+
+### Setup
+
+| Command | Description |
+|---------|-------------|
+| `just claude-init` | Interactive first-time project setup |
+| `just claude-help` | Show all commands |
+
+## Document Lifecycle
+
+Specs and plans written during brainstorming are human-friendly but token-expensive. After implementation and merge, they're converted to compact **decision records**:
+
+```
+docs/superpowers/
+├── specs/        → Active specs (human-friendly)
+├── plans/        → Active plans
+├── decisions/    → Compact LLM-optimized records (always visible)
+├── archive/      → Originals after conversion (.claudeignored)
+└── index.md      → Auto-generated master index
 ```
 
-</details>
+### Decision Records
 
-## Project Structure
+~30-50 lines with YAML frontmatter for indexing:
 
+```yaml
+---
+title: Auth Flow
+date: 2026-04-28
+component: authentication
+status: implemented
+supersedes: null
+dependencies: [user-management, session-store]
+---
 ```
-agent-skills/
-├── skills/                       # Core skills (SKILL.md per directory)
-│   ├── repo-automation-setup/    #   Conventional commits + release-please + CI
-│   ├── commit-history-rewrite/   #   Rewrite messy history to conventional commits
-│   └── branch-push-pr/           #   Branch + commit + push + PR workflow
-├── .claude-plugin/               # Claude Code plugin manifest
-├── .claude/commands/             # Claude Code slash commands
-└── docs/                         # Setup guides per tool
+
+The master index (`index.md`) is auto-generated and always visible to Claude — giving it awareness of all past decisions without loading full documents.
+
+### Archival Flow
+
+Archival happens **post-merge only** (via the `ship-it` skill or `just claude-update-archive`):
+
+1. Identify unconverted specs/plans
+2. Convert to decision records (Claude does this in-session)
+3. Move originals to `archive/`
+4. Rebuild the master index
+
+## Hooks
+
+Optional Claude Code hooks for automation:
+
+- **Pre-session**: Validates profile state, cleans stale locks, warns about broken symlinks
+- **Post-session**: Optionally reverts to minimal profile (configurable per profile)
+
+Install hooks by pointing Claude Code's hook configuration to the `hooks/` directory.
+
+## Adding Skills / MCPs / LSPs
+
+### New Skill
+
+Add a `SKILL.md` to `.github/skills/<name>/` with YAML frontmatter:
+
+```yaml
+---
+name: my-skill
+description: Use when [trigger conditions]
+---
 ```
 
-## Acknowledgments
+Then add it to relevant profiles in `profiles/*.yml`.
 
-The skills in this repo incorporate engineering patterns and principles from:
+### New MCP
 
-- **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** (MIT License, Copyright 2025 Addy Osmani) — specifically the `git-workflow-and-versioning`, `ci-cd-and-automation`, `code-review-and-quality`, and `deprecation-and-migration` skills
-- **[obra/superpowers](https://github.com/obra/superpowers)** (MIT License, Copyright 2025 Jesse Vincent) — workflow patterns for spec-driven development and plan execution
+Create `mcps/<name>.yml`:
+
+```yaml
+name: my-mcp
+description: "What it does"
+install: "claude mcp add my-mcp -- npx -y @scope/package"
+remove: "claude mcp remove my-mcp"
+profiles: [code, design]
+languages: [typescript]
+```
+
+### New LSP
+
+Create `lsps/<name>.yml`:
+
+```yaml
+name: my-lsp
+description: "Language intelligence for X"
+install: "npm install -g my-lsp-server"
+detect: ["indicator-file.json"]
+```
+
+## Prerequisites
+
+- [just](https://github.com/casey/just) — command runner
+- [yq](https://github.com/mikefarah/yq) — YAML processor
+- [gh](https://cli.github.com/) — GitHub CLI (for PR creation in ship profile)
+- [claude](https://docs.anthropic.com/en/docs/claude-code) — Claude Code CLI
+
+## Concurrency
+
+- Different projects: no conflicts (each has its own `.github/skills/` and lock)
+- Same project, different modes: use [git worktrees](https://git-scm.com/docs/git-worktree)
+- Accidental conflicts: lock file prevents concurrent profile switches
 
 ## License
 
-[GPLv3](LICENSE)
+GPL-3.0
