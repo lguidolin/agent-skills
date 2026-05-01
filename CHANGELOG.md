@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/lguidolin/agent-skills/compare/v0.3.1...v0.4.0) (2026-05-01)
+
+
+### Features
+
+* add token-efficient context management toolkit ([#9](https://github.com/lguidolin/agent-skills/issues/9)) ([85e8e4e](https://github.com/lguidolin/agent-skills/commit/85e8e4ebc2cb4f9f9469fbfd6b6163fddc241eb7))
+
 ## [0.3.1](https://github.com/lguidolin/agent-skills/compare/v0.3.0...v0.3.1) (2026-04-16)
 
 
