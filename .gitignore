@@ -20,3 +20,8 @@ Thumbs.db
 
 # Worktrees
 .worktrees/
+
+# Runtime state — populated by bootstrap, init, and activation scripts
+/registry.yml
+/managed-projects.yml
+*.bak
