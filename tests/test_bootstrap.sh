@@ -48,7 +48,7 @@ assert_yaml_eq "$REG" '.assets."find-skills".type' 'skill'
 "$AGENT_SKILLS_DIR/scripts/bootstrap.sh" --skills-only --yes
 assert_dir_exists "$AGENT_SKILLS_DIR/skills-available/find-skills"
 
-# --- MCP discovery ---
+# --- MCP discovery (Task 10) ---
 cat > "$HOME/.claude.json" <<'EOF'
 {
   "mcpServers": {
