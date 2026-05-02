@@ -2,7 +2,9 @@
 # Source from each test. Provides setup_fixture / teardown_fixture.
 
 setup_fixture() {
+  : "${REPO_ROOT:?setup_fixture requires REPO_ROOT to be set}"
   TEST_HOME=$(mktemp -d -t agent-skills-test.XXXXXX)
+  export TEST_HOME
   export HOME="$TEST_HOME"
   export AGENT_SKILLS_DIR="$TEST_HOME/agent-skills"
   mkdir -p \
