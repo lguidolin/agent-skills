@@ -52,4 +52,17 @@ echo "$out" | grep -q $'^foo\tskill$' && _pass || _fail "list missing foo: '$out
 out=$("$LIB" get foo)
 echo "$out" | grep -q 'type: skill' && _pass || _fail "get returned: '$out'"
 
+# 8b. get on missing asset returns non-zero, no stdout
+set +e; out=$("$LIB" get nonexistent 2>/dev/null); rc=$?; set -e
+assert_exit_nonzero "$rc"
+[[ -z "$out" ]] && _pass || _fail "get nonexistent printed: '$out'"
+
+# 9. add with origin= sets the origin field
+"$LIB" add bar type=mcp source=/tmp/bar origin=project-a
+assert_yaml_eq "$REG" '.assets.bar.origin' 'project-a'
+
+# 10. add-active deduplicates
+"$LIB" add-active foo /work/proj-b   # already there from earlier
+assert_yaml_eq "$REG" '.assets.foo.active_in | length' '1'
+
 report_results

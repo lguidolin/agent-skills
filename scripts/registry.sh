@@ -34,19 +34,23 @@ cmd_add() {
     esac
   done
   [[ -n "$type" && -n "$source" ]] || { echo "registry.sh: add requires type= and source=" >&2; exit 1; }
-  export name type source origin
-  yq -i '
-    .assets[strenv(name)].type = strenv(type)
-    | .assets[strenv(name)].source = strenv(source)
-    | .assets[strenv(name)].profiles = (.assets[strenv(name)].profiles // [])
-    | .assets[strenv(name)].active_in = (.assets[strenv(name)].active_in // [])
-  ' "$REG"
+  ( export name type source origin
+    yq -i '
+      .assets[strenv(name)].type = strenv(type)
+      | .assets[strenv(name)].source = strenv(source)
+      | .assets[strenv(name)].profiles = (.assets[strenv(name)].profiles // [])
+      | .assets[strenv(name)].active_in = (.assets[strenv(name)].active_in // [])
+    ' "$REG"
+  )
   if [[ -n "$origin" ]]; then
-    yq -i '.assets[strenv(name)].origin = strenv(origin)' "$REG"
+    ( export name origin
+      yq -i '.assets[strenv(name)].origin = strenv(origin)' "$REG"
+    )
   fi
 }
 
 cmd_has() {
+  ensure_init
   local name="$1"
   local present
   present=$(name="$name" yq '.assets | has(strenv(name))' "$REG" 2>/dev/null || echo "false")
@@ -54,7 +58,12 @@ cmd_has() {
 }
 
 cmd_get() {
+  ensure_init
   local name="$1"
+  if ! cmd_has "$name"; then
+    echo "registry.sh: '$name' not found" >&2
+    return 1
+  fi
   name="$name" yq '.assets[strenv(name)]' "$REG"
 }
 
@@ -65,26 +74,32 @@ cmd_list() {
 cmd_set_profiles() {
   ensure_init
   local name="$1"; shift
-  export name
-  name="$name" yq -i '.assets[strenv(name)].profiles = []' "$REG"
-  for p in "$@"; do
-    export name p
-    yq -i '.assets[strenv(name)].profiles += [strenv(p)]' "$REG"
-  done
+  # Build a JSON array of strings using jq for safe quoting.
+  local json
+  if [[ $# -eq 0 ]]; then
+    json='[]'
+  else
+    json=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+  fi
+  ( export name profiles_json="$json"
+    yq -i '.assets[strenv(name)].profiles = (strenv(profiles_json) | from_json)' "$REG"
+  )
 }
 
 cmd_add_active() {
   ensure_init
   local name="$1" project="$2"
-  export name project
-  yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) + [strenv(project)] | unique)' "$REG"
+  ( export name project
+    yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) + [strenv(project)] | unique)' "$REG"
+  )
 }
 
 cmd_remove_active() {
   ensure_init
   local name="$1" project="$2"
-  export name project
-  yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) | map(select(. != strenv(project))))' "$REG"
+  ( export name project
+    yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) | map(select(. != strenv(project))))' "$REG"
+  )
 }
 
 usage() {
