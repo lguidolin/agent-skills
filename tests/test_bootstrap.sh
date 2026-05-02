@@ -33,7 +33,7 @@ assert_yaml_eq "$REG" '.assets."plugin-alpha".source' "$HOME/.claude/plugins/cac
 "$AGENT_SKILLS_DIR/scripts/bootstrap.sh" --plugins-only --yes
 assert_yaml_eq "$REG" '.assets | length' '2'
 
-# --- Global skill migration ---
+# --- Global skill migration (Task 9) ---
 mkdir -p "$HOME/.claude/skills/find-skills"
 echo "skill body" > "$HOME/.claude/skills/find-skills/SKILL.md"
 
