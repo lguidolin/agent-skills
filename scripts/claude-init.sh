@@ -105,7 +105,7 @@ echo "Suggested MCPs:"
 suggested_mcps=("context7")
 echo "  ✓ context7 (always recommended)"
 
-for mcp_file in "$AGENT_SKILLS_DIR"/mcps/*.yml; do
+for mcp_file in "$AGENT_SKILLS_DIR"/mcps-available/*.yml; do
   [[ ! -f "$mcp_file" ]] && continue
   mcp_name=$(yq -r '.name' "$mcp_file")
   [[ "$mcp_name" == "context7" ]] && continue
