@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENT_SKILLS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROFILE_NAME="${1:?Usage: mcp-configure.sh <profile_name>}"
 PROJECT_DIR="${2:-$(pwd)}"
-MCPS_DIR="$AGENT_SKILLS_DIR/mcps"
+MCPS_DIR="$AGENT_SKILLS_DIR/mcps-available"
 
 if ! command -v yq &>/dev/null; then
   echo "WARNING: 'yq' not installed — skipping MCP configuration." >&2

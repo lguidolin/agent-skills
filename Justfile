@@ -98,7 +98,7 @@ claude-list-mcps:
     #!/usr/bin/env bash
     echo "Available MCPs:"
     echo ""
-    for mcp_file in "{{_agent_skills_dir}}"/mcps/*.yml; do
+    for mcp_file in "{{_agent_skills_dir}}"/mcps-available/*.yml; do
       [[ ! -f "$mcp_file" ]] && continue
       name=$(yq -r '.name' "$mcp_file")
       desc=$(yq -r '.description' "$mcp_file")
@@ -128,11 +128,11 @@ claude-list-active-mcps:
 # Add an MCP to this project
 claude-add-mcp mcp:
     #!/usr/bin/env bash
-    mcp_file="{{_agent_skills_dir}}/mcps/{{mcp}}.yml"
+    mcp_file="{{_agent_skills_dir}}/mcps-available/{{mcp}}.yml"
     if [[ ! -f "$mcp_file" ]]; then
       echo "ERROR: MCP '{{mcp}}' not found." >&2
       echo "Available:" >&2
-      ls "{{_agent_skills_dir}}"/mcps/*.yml 2>/dev/null | xargs -I{} basename {} .yml >&2
+      ls "{{_agent_skills_dir}}"/mcps-available/*.yml 2>/dev/null | xargs -I{} basename {} .yml >&2
       exit 1
     fi
     # Add to .claude-profiles.yml
@@ -160,7 +160,7 @@ claude-rm-mcp mcp:
     else
       echo "No .claude-profiles.yml found."
     fi
-    mcp_file="{{_agent_skills_dir}}/mcps/{{mcp}}.yml"
+    mcp_file="{{_agent_skills_dir}}/mcps-available/{{mcp}}.yml"
     if [[ -f "$mcp_file" ]]; then
       remove_cmd=$(yq -r '.remove // ""' "$mcp_file")
       if [[ -n "$remove_cmd" && "$remove_cmd" != "null" ]]; then
