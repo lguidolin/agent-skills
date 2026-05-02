@@ -212,6 +212,10 @@ claude-rebuild-index:
 
 # --- Setup ---
 
+# One-time global discovery — populate the central pool from existing system state
+claude-bootstrap:
+    @{{_agent_skills_dir}}/scripts/bootstrap.sh
+
 # Interactive first-time project setup
 claude-init:
     @{{_agent_skills_dir}}/scripts/claude-init.sh
