@@ -1,190 +1,131 @@
 #!/usr/bin/env bash
+# scripts/claude-init.sh — per-project init: migrate project-local tools into the central pool
 set -euo pipefail
 
-# Interactive first-time project setup
-# Usage: claude-init.sh
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENT_SKILLS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+REGISTRY="$SCRIPT_DIR/registry.sh"
 
-echo ""
-echo "🔧 Agent Skills — Project Setup"
-echo ""
+PROJECT_DIR="$(pwd)"
+PROFILE=""
+ASSUME_YES=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile) PROFILE="$2"; shift 2 ;;
+    --yes|-y)  ASSUME_YES=1; shift ;;
+    *) echo "claude-init: unknown flag $1" >&2; exit 1 ;;
+  esac
+done
 
-# Step 1: Check AGENT_SKILLS_DIR env var
-if [[ -z "${AGENT_SKILLS_DIR:-}" ]]; then
-  # The variable isn't in the environment (we computed it from script location)
-  echo "Environment variable AGENT_SKILLS_DIR is not set in your shell."
-  echo "Detected clone location: $AGENT_SKILLS_DIR"
-  echo ""
+confirm() { [[ "$ASSUME_YES" -eq 1 ]] || { read -rp "$1 [Y/n] " a; [[ "${a:-Y}" =~ ^[Yy]?$ ]]; }; }
 
-  # Detect shell config file
-  shell_config=""
-  if [[ -f "$HOME/.zshrc" ]]; then
-    shell_config="$HOME/.zshrc"
-  elif [[ -f "$HOME/.bashrc" ]]; then
-    shell_config="$HOME/.bashrc"
-  elif [[ -f "$HOME/.profile" ]]; then
-    shell_config="$HOME/.profile"
-  fi
+"$REGISTRY" init
 
-  if [[ -n "$shell_config" ]]; then
-    read -rp "Add 'export AGENT_SKILLS_DIR=\"$AGENT_SKILLS_DIR\"' to $shell_config? [Y/n] " answer
-    if [[ "${answer:-Y}" =~ ^[Yy]?$ ]]; then
-      echo "" >> "$shell_config"
-      echo "# Agent Skills context management" >> "$shell_config"
-      echo "export AGENT_SKILLS_DIR=\"$AGENT_SKILLS_DIR\"" >> "$shell_config"
-      echo "✓ Added to $shell_config (restart shell or run: source $shell_config)"
+# 1. Migrate skills
+if [[ -d "$PROJECT_DIR/.github/skills" ]]; then
+  for src in "$PROJECT_DIR/.github/skills"/*/; do
+    [[ -d "$src" ]] || continue
+    [[ -L "${src%/}" ]] && continue   # already a symlink — nothing to migrate
+    name=$(basename "$src")
+    dest="$AGENT_SKILLS_DIR/skills-available/$name"
+    if [[ -e "$dest" ]]; then
+      echo "  skip skill $name (already in pool)"; continue
     fi
-  else
-    echo "Could not detect shell config. Add manually:"
-    echo "  export AGENT_SKILLS_DIR=\"$AGENT_SKILLS_DIR\""
-  fi
+    if confirm "  migrate skill $name → pool?"; then
+      mkdir -p "$AGENT_SKILLS_DIR/skills-available"
+      mv "$src" "$dest"
+      "$REGISTRY" add "$name" type=skill source="$dest" origin="$(basename "$PROJECT_DIR")"
+    fi
+  done
 fi
 
-# Step 2: Check/create Justfile import
-echo ""
-if [[ -f "Justfile" ]]; then
-  if grep -q "agent-skills\|AGENT_SKILLS_DIR" Justfile 2>/dev/null; then
-    echo "✓ Justfile already imports agent-skills"
-  else
-    read -rp "Add agent-skills import to existing Justfile? [Y/n] " answer
-    if [[ "${answer:-Y}" =~ ^[Yy]?$ ]]; then
-      # Prepend import
+# 2. Migrate agents
+if [[ -d "$PROJECT_DIR/.claude/agents" ]]; then
+  for src in "$PROJECT_DIR/.claude/agents"/*/; do
+    [[ -d "$src" ]] || continue
+    [[ -L "${src%/}" ]] && continue
+    name=$(basename "$src")
+    dest="$AGENT_SKILLS_DIR/agents-available/$name"
+    if [[ -e "$dest" ]]; then
+      echo "  skip agent $name (already in pool)"; continue
+    fi
+    if confirm "  migrate agent $name → pool?"; then
+      mkdir -p "$AGENT_SKILLS_DIR/agents-available"
+      mv "$src" "$dest"
+      "$REGISTRY" add "$name" type=agent source="$dest" origin="$(basename "$PROJECT_DIR")"
+    fi
+  done
+fi
+
+# 3. Migrate MCPs from .mcp.json → mcps-available stubs
+if [[ -f "$PROJECT_DIR/.mcp.json" ]]; then
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    yml="$AGENT_SKILLS_DIR/mcps-available/$name.yml"
+    if [[ -e "$yml" ]]; then
+      echo "  skip mcp $name (already in pool)"; continue
+    fi
+    if confirm "  migrate mcp $name → pool?"; then
+      mkdir -p "$AGENT_SKILLS_DIR/mcps-available"
+      cmd=$(jq -r ".mcpServers.\"$name\".command" "$PROJECT_DIR/.mcp.json")
+      args=$(jq -c ".mcpServers.\"$name\".args // []" "$PROJECT_DIR/.mcp.json")
       tmp=$(mktemp)
-      {
-        echo "# Agent Skills context management"
-        echo "import \"$AGENT_SKILLS_DIR/Justfile\""
-        echo ""
-        cat Justfile
-      } > "$tmp"
-      mv "$tmp" Justfile
-      echo "✓ Import added to Justfile"
+      ( export n="$name" cmd="$cmd" args_json="$args"
+        yq -n '
+          .name = strenv(n)
+          | .command = strenv(cmd)
+          | .args = (strenv(args_json) | from_json)
+        ' > "$tmp"
+      )
+      mv "$tmp" "$yml"
+      "$REGISTRY" add "$name" type=mcp source="$yml" origin="$(basename "$PROJECT_DIR")"
     fi
-  fi
-else
-  read -rp "No Justfile found. Create one with agent-skills import? [Y/n] " answer
-  if [[ "${answer:-Y}" =~ ^[Yy]?$ ]]; then
-    cat > Justfile <<EOF
-# Project Justfile
-
-# Agent Skills context management
-import "$AGENT_SKILLS_DIR/Justfile"
-EOF
-    echo "✓ Justfile created"
-  fi
+  done < <(jq -r '.mcpServers // {} | keys[]' "$PROJECT_DIR/.mcp.json")
 fi
 
-# Step 3: Detect project language
-echo ""
-echo "Detecting project..."
-languages=()
-if [[ -f "package.json" ]] || [[ -f "tsconfig.json" ]]; then
-  languages+=("typescript")
-  echo "  Found: TypeScript/JavaScript project"
-fi
-if [[ -f "pyproject.toml" ]] || [[ -f "requirements.txt" ]] || [[ -f "setup.py" ]]; then
-  languages+=("python")
-  echo "  Found: Python project"
-fi
-if [[ -f "Cargo.toml" ]]; then
-  languages+=("rust")
-  echo "  Found: Rust project"
-fi
-if [[ -f "go.mod" ]]; then
-  languages+=("go")
-  echo "  Found: Go project"
-fi
-if [[ ${#languages[@]} -eq 0 ]]; then
-  echo "  No specific language detected"
+# 4. Register plugins from project's .claude/settings.json (don't move; Claude owns the cache)
+if [[ -f "$PROJECT_DIR/.claude/settings.json" ]]; then
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] || continue
+    plugin="${entry%@*}"   # strip "@marketplace" suffix for asset name
+    yml="$AGENT_SKILLS_DIR/plugins-available/$plugin.yml"
+    [[ -e "$yml" ]] && continue
+    mkdir -p "$AGENT_SKILLS_DIR/plugins-available"
+    tmp=$(mktemp)
+    ( export n="$plugin" full="$entry" src="$HOME/.claude/plugins/cache"
+      yq -n '
+        .name = strenv(n)
+        | .fullname = strenv(full)
+        | .source = strenv(src)
+      ' > "$tmp"
+    )
+    mv "$tmp" "$yml"
+    "$REGISTRY" add "$plugin" type=plugin source="$HOME/.claude/plugins/cache" origin="$(basename "$PROJECT_DIR")"
+  done < <(jq -r '.enabledPlugins // {} | to_entries | map(select(.value == true)) | .[] | .key' "$PROJECT_DIR/.claude/settings.json" 2>/dev/null || true)
 fi
 
-# Step 4: Suggest MCPs
-echo ""
-echo "Suggested MCPs:"
-suggested_mcps=("context7")
-echo "  ✓ context7 (always recommended)"
+# 5. managed-projects.yml
+MGD="$AGENT_SKILLS_DIR/managed-projects.yml"
+if [[ ! -f "$MGD" ]]; then
+  printf 'projects: []\n' > "$MGD"
+fi
+( export proj="$PROJECT_DIR"
+  yq -i '.projects = ((.projects // []) + [strenv(proj)] | unique)' "$MGD"
+)
 
-for mcp_file in "$AGENT_SKILLS_DIR"/mcps-available/*.yml; do
-  [[ ! -f "$mcp_file" ]] && continue
-  mcp_name=$(yq -r '.name' "$mcp_file")
-  [[ "$mcp_name" == "context7" ]] && continue
-
-  mcp_desc=$(yq -r '.description' "$mcp_file")
-  mcp_langs=$(yq -r '.languages // [] | .[]' "$mcp_file" 2>/dev/null || true)
-  relevant=false
-
-  if [[ -z "$mcp_langs" ]]; then
-    relevant=true  # Universal MCP
+# 6. Activate the chosen profile (default: minimal)
+if [[ -z "$PROFILE" ]]; then
+  if [[ "$ASSUME_YES" -eq 1 ]]; then
+    PROFILE="minimal"
   else
-    for lang in "${languages[@]}"; do
-      if echo "$mcp_langs" | grep -q "$lang"; then
-        relevant=true
-        break
-      fi
-    done
-  fi
-
-  if [[ "$relevant" == true ]]; then
-    read -rp "  ? $mcp_name — $mcp_desc [y/N] " answer
-    if [[ "${answer:-N}" =~ ^[Yy]$ ]]; then
-      suggested_mcps+=("$mcp_name")
-    fi
-  fi
-done
-
-# Step 5: Create .claude-profiles.yml
-echo ""
-if [[ ${#suggested_mcps[@]} -gt 0 ]]; then
-  {
-    echo "mcps:"
-    for mcp in "${suggested_mcps[@]}"; do
-      echo "  - $mcp"
-    done
-  } > .claude-profiles.yml
-  echo "✓ Created .claude-profiles.yml"
-fi
-
-# Step 6: Set up directories
-mkdir -p .github/skills
-echo "✓ Created .github/skills/ directory"
-
-# Step 7: Create .claudeignore with markers
-if [[ ! -f ".claudeignore" ]]; then
-  echo "" | "$SCRIPT_DIR/claudeignore-sync.sh" -
-  echo "✓ Created .claudeignore with managed section"
-else
-  # Ensure markers exist
-  if ! grep -qF "agent-skills:managed:start" .claudeignore; then
-    echo "" | "$SCRIPT_DIR/claudeignore-sync.sh" -
-    echo "✓ Added managed section to existing .claudeignore"
-  else
-    echo "✓ .claudeignore already has managed section"
+    echo ""
+    echo "Choose a starting profile:"
+    ls "$AGENT_SKILLS_DIR/profiles/" | sed 's/.yml$//' | sed 's/^/  /'
+    read -rp "Profile: " PROFILE
+    PROFILE="${PROFILE:-minimal}"
   fi
 fi
+"$SCRIPT_DIR/profile-activate.sh" "$PROFILE" "$PROJECT_DIR"
 
-# Step 8: Suggest LSPs
 echo ""
-for lang in "${languages[@]}"; do
-  lsp_file="$AGENT_SKILLS_DIR/lsps/${lang}.yml"
-  if [[ -f "$lsp_file" ]]; then
-    desc=$(yq -r '.description' "$lsp_file")
-    read -rp "Install LSP for $lang ($desc)? [Y/n] " answer
-    if [[ "${answer:-Y}" =~ ^[Yy]?$ ]]; then
-      install_cmd=$(yq -r '.install' "$lsp_file")
-      echo "  Installing: $install_cmd"
-      eval "$install_cmd" 2>&1 || echo "  ⚠ Failed (install manually later)"
-    fi
-  fi
-done
-
-# Done
-echo ""
-echo "════════════════════════════════════════"
-echo "✓ Setup complete!"
-echo ""
-echo "Start with:"
-echo "  just claude-brainstorm    — for ideation"
-echo "  just claude-code          — for implementation"
-echo "  just claude-help          — see all commands"
-echo ""
+echo "✓ claude-init complete"

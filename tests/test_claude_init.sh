@@ -49,8 +49,11 @@ assert_file_exists "$AGENT_SKILLS_DIR/mcps-available/local-mcp.yml"
 assert_yaml_eq "$AGENT_SKILLS_DIR/mcps-available/local-mcp.yml" '.command' 'echo'
 
 # Plugin registered (source = current global path placeholder)
-assert_file_exists "$AGENT_SKILLS_DIR/plugins-available/local-plugin@mp.yml" \
-  || assert_file_exists "$AGENT_SKILLS_DIR/plugins-available/local-plugin.yml"
+if [[ -f "$AGENT_SKILLS_DIR/plugins-available/local-plugin@mp.yml" ]]; then
+  _pass
+else
+  assert_file_exists "$AGENT_SKILLS_DIR/plugins-available/local-plugin.yml"
+fi
 
 # Registry has entries with origin tag
 REG="$AGENT_SKILLS_DIR/registry.yml"
