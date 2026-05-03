@@ -7,6 +7,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENT_SKILLS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REGISTRY="$SCRIPT_DIR/registry.sh"
+"$REGISTRY" init
 PROJECT_DIR="${2:-$(pwd)}"
 PROFILE_NAME="${1:?Usage: profile-activate.sh <profile_name> [project_dir]}"
 PROFILE_FILE="$AGENT_SKILLS_DIR/profiles/${PROFILE_NAME}.yml"
@@ -117,6 +119,26 @@ if [[ -f ".claude-profiles.yml" ]]; then
   for r in "${plugins_remove[@]}"; do plugins=("${plugins[@]/$r/}"); done
 fi
 "$SCRIPT_DIR/plugin-toggle.sh" "$PROJECT_DIR" "${plugins[@]}"
+
+# Step 8.7: Update registry active_in tracking
+# Build the full set of "now active" tool names for this project
+now_active=()
+for s in "${skills[@]}";  do [[ -n "$s" ]] && now_active+=("$s"); done
+for a in "${agents[@]}";  do [[ -n "$a" ]] && now_active+=("$a"); done
+for m in "${mcps[@]}";    do [[ -n "$m" ]] && now_active+=("$m"); done
+for p in "${plugins[@]}"; do [[ -n "$p" ]] && now_active+=("$p"); done
+
+# For every tool in registry: if it's in now_active, add this project; else remove this project
+while IFS=$'\t' read -r name _type; do
+  [[ -z "$name" ]] && continue
+  in_active=0
+  for n in "${now_active[@]}"; do [[ "$n" == "$name" ]] && in_active=1 && break; done
+  if [[ "$in_active" -eq 1 ]]; then
+    "$REGISTRY" add-active "$name" "$PROJECT_DIR"
+  else
+    "$REGISTRY" remove-active "$name" "$PROJECT_DIR"
+  fi
+done < <("$REGISTRY" list)
 
 # Step 9: Report
 echo ""
