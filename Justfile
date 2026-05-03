@@ -37,7 +37,7 @@ claude-list-skills:
     #!/usr/bin/env bash
     echo "Available skills:"
     echo ""
-    for dir in "{{_agent_skills_dir}}"/.github/skills/*/; do
+    for dir in "{{_agent_skills_dir}}"/skills-available/*/; do
       [[ ! -d "$dir" ]] && continue
       skill=$(basename "$dir")
       desc=""

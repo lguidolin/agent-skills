@@ -129,11 +129,21 @@ code:
 | `just claude-update-archive` | Find unconverted specs, generate prompt |
 | `just claude-rebuild-index` | Rebuild decision index |
 
+### Inventory
+
+| Command | Description |
+|---------|-------------|
+| `just claude-list` | All tools in the pool, marked active/inactive |
+| `just claude-list-type <type>` | Filter by type (skill, agent, mcp, plugin) |
+| `just claude-list-profile <profile>` | Tools belonging to a profile |
+
 ### Setup
 
 | Command | Description |
 |---------|-------------|
-| `just claude-init` | Interactive first-time project setup |
+| `just claude-bootstrap` | One-time global discovery — populate the pool |
+| `just claude-init` | Per-project init: migrate local tools into the pool |
+| `just test` | Run the bash test suite |
 | `just claude-help` | Show all commands |
 
 ## Document Lifecycle
@@ -188,7 +198,7 @@ Install hooks by pointing Claude Code's hook configuration to the `hooks/` direc
 
 ### New Skill
 
-Add a `SKILL.md` to `.github/skills/<name>/` with YAML frontmatter:
+Add a `SKILL.md` to `skills-available/<name>/` with YAML frontmatter:
 
 ```yaml
 ---
@@ -201,7 +211,7 @@ Then add it to relevant profiles in `profiles/*.yml`.
 
 ### New MCP
 
-Create `mcps/<name>.yml`:
+Create `mcps-available/<name>.yml`:
 
 ```yaml
 name: my-mcp
