@@ -33,27 +33,27 @@ TOOL_LIST="$AGENT_SKILLS_DIR/scripts/tool-list.sh"
 
 # --- 1. Default output: section headers present
 out=$("$TOOL_LIST")
-echo "$out" | grep -q 'SKILLS'  && _pass || _fail "default output missing SKILLS section"
-echo "$out" | grep -q 'AGENTS'  && _pass || _fail "default output missing AGENTS section"
-echo "$out" | grep -q 'MCPS'    && _pass || _fail "default output missing MCPS section"
+echo "$out" | grep -Fq 'SKILLS'  && _pass || _fail "default output missing SKILLS section"
+echo "$out" | grep -Fq 'AGENTS'  && _pass || _fail "default output missing AGENTS section"
+echo "$out" | grep -Fq 'MCPS'    && _pass || _fail "default output missing MCPS section"
 
 # --- 2. skill-a marked active (●), skill-b inactive (○)
-echo "$out" | grep 'skill-a' | grep -q '●' && _pass || _fail "skill-a should be marked ● (active)"
-echo "$out" | grep 'skill-b' | grep -q '○' && _pass || _fail "skill-b should be marked ○ (inactive)"
+echo "$out" | grep -F 'skill-a' | grep -Fq '●' && _pass || _fail "skill-a should be marked ● (active)"
+echo "$out" | grep -F 'skill-b' | grep -Fq '○' && _pass || _fail "skill-b should be marked ○ (inactive)"
 
 # --- 3. --type=skill excludes browser (mcp)
 out_skill=$("$TOOL_LIST" --type=skill)
-echo "$out_skill" | grep -q 'skill-a'  && _pass || _fail "--type=skill should show skill-a"
-echo "$out_skill" | grep -q 'browser'  && { _fail "--type=skill should not show browser (mcp)"; } || _pass
+echo "$out_skill" | grep -Fq 'skill-a'  && _pass || _fail "--type=skill should show skill-a"
+echo "$out_skill" | grep -Fq 'browser'  && { _fail "--type=skill should not show browser (mcp)"; } || _pass
 
 # --- 4. --profile=design shows browser, excludes skill-b
 out_design=$("$TOOL_LIST" --profile=design)
-echo "$out_design" | grep -q 'browser'  && _pass || _fail "--profile=design should show browser"
-echo "$out_design" | grep -q 'skill-b'  && { _fail "--profile=design should not show skill-b"; } || _pass
+echo "$out_design" | grep -Fq 'browser'  && _pass || _fail "--profile=design should show browser"
+echo "$out_design" | grep -Fq 'skill-b'  && { _fail "--profile=design should not show skill-b"; } || _pass
 
 # --- 5. --project=/work/proj-a shows skill-a, excludes skill-b
 out_proj=$("$TOOL_LIST" --project=/work/proj-a)
-echo "$out_proj" | grep -q 'skill-a'  && _pass || _fail "--project=/work/proj-a should show skill-a"
-echo "$out_proj" | grep -q 'skill-b'  && { _fail "--project=/work/proj-a should not show skill-b"; } || _pass
+echo "$out_proj" | grep -Fq 'skill-a'  && _pass || _fail "--project=/work/proj-a should show skill-a"
+echo "$out_proj" | grep -Fq 'skill-b'  && { _fail "--project=/work/proj-a should not show skill-b"; } || _pass
 
 report_results

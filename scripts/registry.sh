@@ -34,6 +34,10 @@ cmd_add() {
     esac
   done
   [[ -n "$type" && -n "$source" ]] || { echo "registry.sh: add requires type= and source=" >&2; exit 1; }
+  if [[ "$name" == *,* ]]; then
+    echo "registry.sh: tool name '$name' contains ',' — not allowed (CSV delimiter)" >&2
+    exit 1
+  fi
   ( export name type source origin
     yq -i '
       .assets[strenv(name)].type = strenv(type)
@@ -74,6 +78,12 @@ cmd_list() {
 cmd_set_profiles() {
   ensure_init
   local name="$1"; shift
+  for p in "$@"; do
+    if [[ "$p" == *,* ]]; then
+      echo "registry.sh: profile name '$p' contains ',' — not allowed (CSV delimiter)" >&2
+      exit 1
+    fi
+  done
   # Build a JSON array of strings using jq for safe quoting.
   local json
   if [[ $# -eq 0 ]]; then
@@ -89,6 +99,10 @@ cmd_set_profiles() {
 cmd_add_active() {
   ensure_init
   local name="$1" project="$2"
+  if [[ "$project" == *,* ]]; then
+    echo "registry.sh: project path '$project' contains ',' — not allowed (CSV delimiter)" >&2
+    exit 1
+  fi
   ( export name project
     yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) + [strenv(project)] | unique)' "$REG"
   )
@@ -97,6 +111,10 @@ cmd_add_active() {
 cmd_remove_active() {
   ensure_init
   local name="$1" project="$2"
+  if [[ "$project" == *,* ]]; then
+    echo "registry.sh: project path '$project' contains ',' — not allowed (CSV delimiter)" >&2
+    exit 1
+  fi
   ( export name project
     yq -i '.assets[strenv(name)].active_in = ((.assets[strenv(name)].active_in // []) | map(select(. != strenv(project))))' "$REG"
   )

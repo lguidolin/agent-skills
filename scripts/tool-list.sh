@@ -20,6 +20,11 @@ for arg in "$@"; do
   esac
 done
 
+case "$filter_type" in
+  ""|plugin|skill|agent|mcp) ;;
+  *) echo "tool-list.sh: unknown --type=$filter_type (expected: plugin|skill|agent|mcp)" >&2; exit 2 ;;
+esac
+
 if [[ ! -f "$REG" ]]; then
   echo "No registry found at $REG. Run 'just claude-bootstrap' to populate."
   exit 0
@@ -40,7 +45,7 @@ rows=$(yq '
       (.value.origin // "")
     ]
   | @tsv
-' "$REG" 2>/dev/null || true)
+' "$REG")
 
 # --- filter_row: returns 0 (include) or 1 (exclude) ---
 filter_row() {
@@ -79,6 +84,8 @@ render_section() {
   local section_type="$1"
   local header="$2"
   local printed_header=0
+
+  [[ -z "$rows" ]] && return
 
   while IFS=$'\t' read -r name type active_count profiles_csv active_in_csv origin; do
     [[ "$type" != "$section_type" ]] && continue
