@@ -68,6 +68,32 @@ for skill in "${skills[@]}"; do
   fi
 done
 
+# Step 6.5: Tear down old agent symlinks, then create new ones
+mkdir -p .claude/agents
+find .claude/agents -maxdepth 1 -type l -exec rm {} \; 2>/dev/null || true
+
+mapfile -t agents < <(yq '.agents // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+
+# project-level overrides for agents
+if [[ -f ".claude-profiles.yml" ]]; then
+  mapfile -t agents_add    < <(yq ".${PROFILE_NAME}.agents_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  mapfile -t agents_remove < <(yq ".${PROFILE_NAME}.agents_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  for a in "${agents_add[@]}";    do [[ -n "$a" ]] && agents+=("$a"); done
+  for r in "${agents_remove[@]}"; do agents=("${agents[@]/$r/}"); done
+fi
+
+agents_linked=0
+for agent in "${agents[@]}"; do
+  [[ -z "$agent" ]] && continue
+  src="$AGENT_SKILLS_DIR/agents-available/$agent"
+  if [[ -d "$src" ]]; then
+    ln -sf "$src" ".claude/agents/$agent"
+    agents_linked=$((agents_linked + 1))
+  else
+    echo "WARNING: agent '$agent' not in $AGENT_SKILLS_DIR/agents-available/ — skipping" >&2
+  fi
+done
+
 # Step 7: Sync .claudeignore
 patterns=$(yq -r '.claudeignore // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
 echo "$patterns" | "$SCRIPT_DIR/claudeignore-sync.sh" -
@@ -81,6 +107,7 @@ fi
 echo ""
 echo "✓ Profile '$PROFILE_NAME' activated"
 echo "  Skills: $linked symlinked"
+echo "  Agents: $agents_linked symlinked"
 echo "  Directory: $PROJECT_DIR/.github/skills/"
 echo ""
 echo "Active skills:"
