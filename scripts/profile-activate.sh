@@ -59,12 +59,12 @@ fi
 linked=0
 for skill in "${skills[@]}"; do
   [[ -z "$skill" ]] && continue
-  source_dir="$AGENT_SKILLS_DIR/.github/skills/$skill"
+  source_dir="$AGENT_SKILLS_DIR/skills-available/$skill"
   if [[ -d "$source_dir" ]]; then
     ln -sf "$source_dir" ".github/skills/$skill"
     linked=$((linked + 1))
   else
-    echo "WARNING: Skill '$skill' not found in $AGENT_SKILLS_DIR/.github/skills/" >&2
+    echo "WARNING: skill '$skill' not in $AGENT_SKILLS_DIR/skills-available/ — skipping" >&2
   fi
 done
 
