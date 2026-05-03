@@ -7,6 +7,7 @@ AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 REGISTRY="$SCRIPT_DIR/registry.sh"
 
 PROJECT_DIR="$(pwd)"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
 PROFILE=""
 ASSUME_YES=0
 while [[ $# -gt 0 ]]; do
@@ -34,7 +35,7 @@ if [[ -d "$PROJECT_DIR/.github/skills" ]]; then
     if confirm "  migrate skill $name → pool?"; then
       mkdir -p "$AGENT_SKILLS_DIR/skills-available"
       mv "$src" "$dest"
-      "$REGISTRY" add "$name" type=skill source="$dest" origin="$(basename "$PROJECT_DIR")"
+      "$REGISTRY" add "$name" type=skill source="$dest" origin="$PROJECT_NAME"
     fi
   done
 fi
@@ -52,7 +53,7 @@ if [[ -d "$PROJECT_DIR/.claude/agents" ]]; then
     if confirm "  migrate agent $name → pool?"; then
       mkdir -p "$AGENT_SKILLS_DIR/agents-available"
       mv "$src" "$dest"
-      "$REGISTRY" add "$name" type=agent source="$dest" origin="$(basename "$PROJECT_DIR")"
+      "$REGISTRY" add "$name" type=agent source="$dest" origin="$PROJECT_NAME"
     fi
   done
 fi
@@ -67,8 +68,12 @@ if [[ -f "$PROJECT_DIR/.mcp.json" ]]; then
     fi
     if confirm "  migrate mcp $name → pool?"; then
       mkdir -p "$AGENT_SKILLS_DIR/mcps-available"
-      cmd=$(jq -r ".mcpServers.\"$name\".command" "$PROJECT_DIR/.mcp.json")
-      args=$(jq -c ".mcpServers.\"$name\".args // []" "$PROJECT_DIR/.mcp.json")
+      cmd=$(jq -r --arg n "$name" '.mcpServers[$n].command // ""' "$PROJECT_DIR/.mcp.json")
+      args=$(jq -c --arg n "$name" '.mcpServers[$n].args // []' "$PROJECT_DIR/.mcp.json")
+      if [[ -z "$cmd" ]]; then
+        echo "  skip mcp $name (no .command in .mcp.json)" >&2
+        continue
+      fi
       tmp=$(mktemp)
       ( export n="$name" cmd="$cmd" args_json="$args"
         yq -n '
@@ -78,7 +83,7 @@ if [[ -f "$PROJECT_DIR/.mcp.json" ]]; then
         ' > "$tmp"
       )
       mv "$tmp" "$yml"
-      "$REGISTRY" add "$name" type=mcp source="$yml" origin="$(basename "$PROJECT_DIR")"
+      "$REGISTRY" add "$name" type=mcp source="$yml" origin="$PROJECT_NAME"
     fi
   done < <(jq -r '.mcpServers // {} | keys[]' "$PROJECT_DIR/.mcp.json")
 fi
@@ -100,8 +105,8 @@ if [[ -f "$PROJECT_DIR/.claude/settings.json" ]]; then
       ' > "$tmp"
     )
     mv "$tmp" "$yml"
-    "$REGISTRY" add "$plugin" type=plugin source="$HOME/.claude/plugins/cache" origin="$(basename "$PROJECT_DIR")"
-  done < <(jq -r '.enabledPlugins // {} | to_entries | map(select(.value == true)) | .[] | .key' "$PROJECT_DIR/.claude/settings.json" 2>/dev/null || true)
+    "$REGISTRY" add "$plugin" type=plugin source="$HOME/.claude/plugins/cache" origin="$PROJECT_NAME"
+  done < <(jq -r '.enabledPlugins // {} | to_entries | map(select(.value == true)) | .[] | .key' "$PROJECT_DIR/.claude/settings.json")
 fi
 
 # 5. managed-projects.yml
@@ -120,7 +125,10 @@ if [[ -z "$PROFILE" ]]; then
   else
     echo ""
     echo "Choose a starting profile:"
-    ls "$AGENT_SKILLS_DIR/profiles/" | sed 's/.yml$//' | sed 's/^/  /'
+    for f in "$AGENT_SKILLS_DIR/profiles/"*.yml; do
+      [[ -e "$f" ]] || continue
+      printf '  %s\n' "$(basename "$f" .yml)"
+    done
     read -rp "Profile: " PROFILE
     PROFILE="${PROFILE:-minimal}"
   fi
