@@ -98,10 +98,15 @@ done
 patterns=$(yq -r '.claudeignore // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
 echo "$patterns" | "$SCRIPT_DIR/claudeignore-sync.sh" -
 
-# Step 8: Configure MCPs (best effort, script may not exist yet)
-if [[ -x "$SCRIPT_DIR/mcp-configure.sh" ]]; then
-  "$SCRIPT_DIR/mcp-configure.sh" "$PROFILE_NAME" "$PROJECT_DIR" 2>/dev/null || true
+# Step 8: Write per-project .mcp.json from profile MCP list
+mapfile -t mcps < <(yq '.mcps // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+if [[ -f ".claude-profiles.yml" ]]; then
+  mapfile -t mcps_add    < <(yq ".${PROFILE_NAME}.mcps_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  mapfile -t mcps_remove < <(yq ".${PROFILE_NAME}.mcps_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  for m in "${mcps_add[@]}";    do [[ -n "$m" ]] && mcps+=("$m"); done
+  for r in "${mcps_remove[@]}"; do mcps=("${mcps[@]/$r/}"); done
 fi
+"$SCRIPT_DIR/mcp-write.sh" "$PROJECT_DIR" "${mcps[@]}"
 
 # Step 9: Report
 echo ""
