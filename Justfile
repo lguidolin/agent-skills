@@ -210,6 +210,20 @@ claude-update-archive:
 claude-rebuild-index:
     @{{_agent_skills_dir}}/scripts/index-rebuild.sh
 
+# --- Inventory ---
+
+# Show the inventory: all tools, marked active/inactive, with profile membership
+claude-list:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh
+
+# Show only tools of a specific type (skill, agent, mcp, plugin)
+claude-list-type type:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh --type={{type}}
+
+# Show tools in a specific profile
+claude-list-profile profile:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh --profile={{profile}}
+
 # --- Setup ---
 
 # One-time global discovery — populate the central pool from existing system state
