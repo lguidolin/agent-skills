@@ -6,46 +6,42 @@ Manage your Claude Code sessions with profile-based skill loading, MCP/LSP confi
 
 ## Quick Start
 
-1. **Clone this repo** wherever you keep tools:
+1. **Clone this repo** to a stable location:
    ```bash
    git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
    ```
 
-2. **Set the environment variable** in your shell config (`.zshrc`, `.bashrc`):
+2. **Set the env var** in your shell config (`.zshrc`, `.bashrc`):
    ```bash
    export AGENT_SKILLS_DIR="$HOME/local/agent-skills"
    ```
 
-3. **Import into your project's Justfile:**
+3. **Bootstrap** — one-time discovery of tools already installed on this machine:
+   ```bash
+   just --justfile $AGENT_SKILLS_DIR/Justfile claude-bootstrap
+   ```
+
+4. **Per project** — import the Justfile and run init once:
    ```justfile
    import "~/local/agent-skills/Justfile"
    ```
-
-   Or run the interactive setup:
    ```bash
-   just claude-init
-   ```
-
-4. **Activate a profile:**
-   ```bash
-   just claude-brainstorm   # ideation mode
-   just claude-code         # implementation mode
+   just claude-init           # migrates project-local tools into the pool
+   just claude-code           # activate the 'code' profile in this project
    ```
 
 ## How It Works
 
-This repo is both a **skill library** and a **context management toolkit**. Claude Code auto-discovers skills from `.github/skills/` in your project. This toolkit manages which skills are visible via symlinks — only the skills relevant to your current activity get linked, reducing token consumption.
+`agent-skills` is a centralized inventory + per-project activation system. All your tools — skills, agents, MCPs, plugins — live in one pool at `~/local/agent-skills/{skills,agents,mcps,plugins}-available/`. A `registry.yml` tracks what exists and where.
 
-### The Problem
+**Profile activation** is per-project: it creates symlinks in `<project>/.github/skills/` and `<project>/.claude/agents/`, writes `<project>/.mcp.json`, and toggles `enabledPlugins` in `<project>/.claude/settings.json`. Other projects are unaffected.
 
-Claude Code loads all discovered skills into context, consuming tokens regardless of relevance. A brainstorming session doesn't need debugging skills. A coding session doesn't need deployment skills. Specs written for humans are verbose when an LLM just needs decisions.
-
-### The Solution
-
-- **Profiles** define which skills, MCPs, and ignore patterns apply to each activity
-- **Symlinks** make only active skills visible to Claude Code
-- **`.claudeignore`** prevents irrelevant files from being read
-- **Decision records** replace verbose specs with compact LLM-optimized summaries
+**Inventory:**
+```
+just claude-list                    # all tools, grouped by type
+just claude-list-type skill         # filter by type
+just claude-list-profile code       # filter by profile
+```
 
 ## Profiles
 
