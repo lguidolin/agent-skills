@@ -108,6 +108,16 @@ if [[ -f ".claude-profiles.yml" ]]; then
 fi
 "$SCRIPT_DIR/mcp-write.sh" "$PROJECT_DIR" "${mcps[@]}"
 
+# Step 8.5: Write per-project enabledPlugins
+mapfile -t plugins < <(yq '.plugins // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+if [[ -f ".claude-profiles.yml" ]]; then
+  mapfile -t plugins_add    < <(yq ".${PROFILE_NAME}.plugins_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  mapfile -t plugins_remove < <(yq ".${PROFILE_NAME}.plugins_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  for p in "${plugins_add[@]}";    do [[ -n "$p" ]] && plugins+=("$p"); done
+  for r in "${plugins_remove[@]}"; do plugins=("${plugins[@]/$r/}"); done
+fi
+"$SCRIPT_DIR/plugin-toggle.sh" "$PROJECT_DIR" "${plugins[@]}"
+
 # Step 9: Report
 echo ""
 echo "✓ Profile '$PROFILE_NAME' activated"
