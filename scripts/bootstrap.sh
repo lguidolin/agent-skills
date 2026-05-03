@@ -50,11 +50,13 @@ discover_plugins() {
       # Write plugins-available stub
       local stub="$AGENT_SKILLS_DIR/plugins-available/$plugin.yml"
       mkdir -p "$AGENT_SKILLS_DIR/plugins-available"
-      cat > "$stub" <<EOF
-name: $plugin
-marketplace: $marketplace
-source: $version_dir
-EOF
+      ( export plugin marketplace version_dir
+        yq -n '
+          .name = strenv(plugin)
+          | .marketplace = strenv(marketplace)
+          | .source = strenv(version_dir)
+        ' > "$stub"
+      )
 
       "$REGISTRY" add "$plugin" type=plugin source="$version_dir"
       count=$((count + 1))
@@ -98,12 +100,14 @@ discover_global_mcps() {
   local cfg="$HOME/.claude.json"
   [[ -f "$cfg" ]] || { echo "  (no ~/.claude.json, skipping)"; return; }
 
+  if ! jq empty "$cfg" 2>/dev/null; then
+    echo "  WARNING: ~/.claude.json is not valid JSON, skipping" >&2
+    return
+  fi
+
   local count
   count=$(jq -r '.mcpServers // {} | keys | length' "$cfg" 2>/dev/null || echo 0)
   [[ "$count" -gt 0 ]] || { echo "  (no MCPs registered)"; return; }
-
-  # Backup first
-  cp "$cfg" "$cfg.bak.$(date +%s)"
 
   while IFS= read -r name; do
     [[ -n "$name" ]] || continue
@@ -112,18 +116,25 @@ discover_global_mcps() {
     args=$(jq -c ".mcpServers.\"$name\".args // []" "$cfg")
     local stub="$AGENT_SKILLS_DIR/mcps-available/$name.yml"
     mkdir -p "$AGENT_SKILLS_DIR/mcps-available"
-    cat > "$stub" <<EOF
-name: $name
-command: $cmd
-args: $args
-EOF
+    ( export name cmd args
+      yq -n '
+        .name = strenv(name)
+        | .command = strenv(cmd)
+        | .args = (strenv(args) | from_json)
+      ' > "$stub"
+    )
     "$REGISTRY" add "$name" type=mcp source="$stub"
   done < <(jq -r '.mcpServers // {} | keys[]' "$cfg")
 
   if confirm "  empty mcpServers in ~/.claude.json (will re-populate per-project)?"; then
     local tmp
     tmp=$(jq '.mcpServers = {}' "$cfg")
-    printf '%s\n' "$tmp" > "$cfg"
+    local tmpfile
+    tmpfile=$(mktemp "${cfg}.tmp.XXXXXX")
+    printf '%s\n' "$tmp" > "$tmpfile"
+    mv "$tmpfile" "$cfg"
+    # Backup after write
+    cp "$cfg" "$cfg.bak.$(date +%s)"
   fi
   echo "  registered $count MCP(s)"
 }
@@ -133,11 +144,15 @@ disable_global_plugins() {
   local cfg="$HOME/.claude/settings.json"
   [[ -f "$cfg" ]] || { echo "  (no settings.json, skipping)"; return; }
 
-  cp "$cfg" "$cfg.bak.$(date +%s)"
   if confirm "  set every entry in enabledPlugins to false?"; then
     local tmp
     tmp=$(jq '(.enabledPlugins // {}) as $p | .enabledPlugins = ($p | map_values(false))' "$cfg")
-    printf '%s\n' "$tmp" > "$cfg"
+    local tmpfile
+    tmpfile=$(mktemp "${cfg}.tmp.XXXXXX")
+    printf '%s\n' "$tmp" > "$tmpfile"
+    mv "$tmpfile" "$cfg"
+    # Backup after write
+    cp "$cfg" "$cfg.bak.$(date +%s)"
     echo "  done."
   fi
 }
