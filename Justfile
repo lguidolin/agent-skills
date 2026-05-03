@@ -224,6 +224,12 @@ claude-list-type type:
 claude-list-profile profile:
     @{{_agent_skills_dir}}/scripts/tool-list.sh --profile={{profile}}
 
+# --- Tests ---
+
+# Run all bash tests
+test:
+    @{{_agent_skills_dir}}/tests/run.sh
+
 # --- Setup ---
 
 # One-time global discovery — populate the central pool from existing system state
