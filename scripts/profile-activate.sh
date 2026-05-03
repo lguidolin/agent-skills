@@ -39,22 +39,26 @@ mkdir -p .github/skills
 find .github/skills -maxdepth 1 -type l -exec rm {} \;
 
 # Step 4: Read skills from profile
-mapfile -t skills < <(yq -r '.skills[]' "$PROFILE_FILE" 2>/dev/null || true)
+mapfile -t skills < <(yq '.skills[]' "$PROFILE_FILE" || true)
 
 # Step 5: Merge project overrides if .claude-profiles.yml exists
 if [[ -f ".claude-profiles.yml" ]]; then
-  mapfile -t skills_add < <(yq -r ".${PROFILE_NAME}.skills_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  mapfile -t skills_remove < <(yq -r ".${PROFILE_NAME}.skills_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
+  mapfile -t skills_add    < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].skills_add // [] | .[]' ".claude-profiles.yml" || true ))
+  mapfile -t skills_remove < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].skills_remove // [] | .[]' ".claude-profiles.yml" || true ))
 
   # Add project-specific skills
   for skill in "${skills_add[@]}"; do
     [[ -n "$skill" ]] && skills+=("$skill")
   done
 
-  # Remove excluded skills
-  for remove in "${skills_remove[@]}"; do
-    skills=("${skills[@]/$remove/}")
+  # Remove excluded skills (exact-match only)
+  new=()
+  for x in "${skills[@]}"; do
+    drop=0
+    for r in "${skills_remove[@]}"; do [[ "$x" == "$r" ]] && drop=1 && break; done
+    [[ $drop -eq 1 ]] || new+=("$x")
   done
+  skills=("${new[@]}")
 fi
 
 # Step 6: Create symlinks
@@ -74,14 +78,20 @@ done
 mkdir -p .claude/agents
 find .claude/agents -maxdepth 1 -type l -exec rm {} \; 2>/dev/null || true
 
-mapfile -t agents < <(yq '.agents // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+mapfile -t agents < <(yq '.agents // [] | .[]' "$PROFILE_FILE" || true)
 
 # project-level overrides for agents
 if [[ -f ".claude-profiles.yml" ]]; then
-  mapfile -t agents_add    < <(yq ".${PROFILE_NAME}.agents_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  mapfile -t agents_remove < <(yq ".${PROFILE_NAME}.agents_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  for a in "${agents_add[@]}";    do [[ -n "$a" ]] && agents+=("$a"); done
-  for r in "${agents_remove[@]}"; do agents=("${agents[@]/$r/}"); done
+  mapfile -t agents_add    < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].agents_add // [] | .[]' ".claude-profiles.yml" || true ))
+  mapfile -t agents_remove < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].agents_remove // [] | .[]' ".claude-profiles.yml" || true ))
+  for a in "${agents_add[@]}"; do [[ -n "$a" ]] && agents+=("$a"); done
+  new=()
+  for x in "${agents[@]}"; do
+    drop=0
+    for r in "${agents_remove[@]}"; do [[ "$x" == "$r" ]] && drop=1 && break; done
+    [[ $drop -eq 1 ]] || new+=("$x")
+  done
+  agents=("${new[@]}")
 fi
 
 agents_linked=0
@@ -97,26 +107,38 @@ for agent in "${agents[@]}"; do
 done
 
 # Step 7: Sync .claudeignore
-patterns=$(yq -r '.claudeignore // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+patterns=$(yq '.claudeignore // [] | .[]' "$PROFILE_FILE" || true)
 echo "$patterns" | "$SCRIPT_DIR/claudeignore-sync.sh" -
 
 # Step 8: Write per-project .mcp.json from profile MCP list
-mapfile -t mcps < <(yq '.mcps // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+mapfile -t mcps < <(yq '.mcps // [] | .[]' "$PROFILE_FILE" || true)
 if [[ -f ".claude-profiles.yml" ]]; then
-  mapfile -t mcps_add    < <(yq ".${PROFILE_NAME}.mcps_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  mapfile -t mcps_remove < <(yq ".${PROFILE_NAME}.mcps_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  for m in "${mcps_add[@]}";    do [[ -n "$m" ]] && mcps+=("$m"); done
-  for r in "${mcps_remove[@]}"; do mcps=("${mcps[@]/$r/}"); done
+  mapfile -t mcps_add    < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].mcps_add // [] | .[]' ".claude-profiles.yml" || true ))
+  mapfile -t mcps_remove < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].mcps_remove // [] | .[]' ".claude-profiles.yml" || true ))
+  for m in "${mcps_add[@]}"; do [[ -n "$m" ]] && mcps+=("$m"); done
+  new=()
+  for x in "${mcps[@]}"; do
+    drop=0
+    for r in "${mcps_remove[@]}"; do [[ "$x" == "$r" ]] && drop=1 && break; done
+    [[ $drop -eq 1 ]] || new+=("$x")
+  done
+  mcps=("${new[@]}")
 fi
 "$SCRIPT_DIR/mcp-write.sh" "$PROJECT_DIR" "${mcps[@]}"
 
 # Step 8.5: Write per-project enabledPlugins
-mapfile -t plugins < <(yq '.plugins // [] | .[]' "$PROFILE_FILE" 2>/dev/null || true)
+mapfile -t plugins < <(yq '.plugins // [] | .[]' "$PROFILE_FILE" || true)
 if [[ -f ".claude-profiles.yml" ]]; then
-  mapfile -t plugins_add    < <(yq ".${PROFILE_NAME}.plugins_add // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  mapfile -t plugins_remove < <(yq ".${PROFILE_NAME}.plugins_remove // [] | .[]" ".claude-profiles.yml" 2>/dev/null || true)
-  for p in "${plugins_add[@]}";    do [[ -n "$p" ]] && plugins+=("$p"); done
-  for r in "${plugins_remove[@]}"; do plugins=("${plugins[@]/$r/}"); done
+  mapfile -t plugins_add    < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].plugins_add // [] | .[]' ".claude-profiles.yml" || true ))
+  mapfile -t plugins_remove < <(( export pn="$PROFILE_NAME"; yq '.[strenv(pn)].plugins_remove // [] | .[]' ".claude-profiles.yml" || true ))
+  for p in "${plugins_add[@]}"; do [[ -n "$p" ]] && plugins+=("$p"); done
+  new=()
+  for x in "${plugins[@]}"; do
+    drop=0
+    for r in "${plugins_remove[@]}"; do [[ "$x" == "$r" ]] && drop=1 && break; done
+    [[ $drop -eq 1 ]] || new+=("$x")
+  done
+  plugins=("${new[@]}")
 fi
 "$SCRIPT_DIR/plugin-toggle.sh" "$PROJECT_DIR" "${plugins[@]}"
 

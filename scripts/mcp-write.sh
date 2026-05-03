@@ -20,11 +20,18 @@ for name in "$@"; do
     echo "WARNING: mcp '$name' not in mcps-available/ — skipping" >&2
     continue
   fi
-  cmd=$(yq '.command' "$yml")
+  cmd=$(yq '.command // ""' "$yml")
+  if [[ -z "$cmd" || "$cmd" == "null" ]]; then
+    echo "WARNING: mcp '$name' has no .command in $yml — skipping" >&2
+    continue
+  fi
   args=$(yq -o=json -I=0 '.args // []' "$yml")
   servers=$(jq --arg n "$name" --arg cmd "$cmd" --argjson args "$args" \
     '.[$n] = {command: $cmd, args: $args}' <<<"$servers")
 done
 
 # Write .mcp.json (always overwrite — profile activation owns this file)
-echo "{\"mcpServers\": $servers}" | jq '.' > "$OUT"
+mkdir -p "$PROJECT_DIR"
+tmp=$(mktemp)
+echo "{\"mcpServers\": $servers}" | jq '.' > "$tmp"
+mv "$tmp" "$OUT"

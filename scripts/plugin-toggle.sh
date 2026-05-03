@@ -30,9 +30,10 @@ for p in "$@"; do
 done
 
 # Merge into existing settings.json if present, else create
+out=$(mktemp)
 if [[ -f "$SETTINGS" ]]; then
-  tmp=$(jq --argjson m "$map" '.enabledPlugins = $m' "$SETTINGS")
-  printf '%s' "$tmp" > "$SETTINGS"
+  jq --argjson m "$map" '.enabledPlugins = $m' "$SETTINGS" > "$out"
 else
-  printf '{"enabledPlugins": %s}\n' "$map" | jq '.' > "$SETTINGS"
+  printf '{"enabledPlugins": %s}\n' "$map" | jq '.' > "$out"
 fi
+mv "$out" "$SETTINGS"
