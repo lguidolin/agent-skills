@@ -37,7 +37,7 @@ claude-list-skills:
     #!/usr/bin/env bash
     echo "Available skills:"
     echo ""
-    for dir in "{{_agent_skills_dir}}"/.github/skills/*/; do
+    for dir in "{{_agent_skills_dir}}"/skills-available/*/; do
       [[ ! -d "$dir" ]] && continue
       skill=$(basename "$dir")
       desc=""
@@ -98,7 +98,7 @@ claude-list-mcps:
     #!/usr/bin/env bash
     echo "Available MCPs:"
     echo ""
-    for mcp_file in "{{_agent_skills_dir}}"/mcps/*.yml; do
+    for mcp_file in "{{_agent_skills_dir}}"/mcps-available/*.yml; do
       [[ ! -f "$mcp_file" ]] && continue
       name=$(yq -r '.name' "$mcp_file")
       desc=$(yq -r '.description' "$mcp_file")
@@ -128,11 +128,11 @@ claude-list-active-mcps:
 # Add an MCP to this project
 claude-add-mcp mcp:
     #!/usr/bin/env bash
-    mcp_file="{{_agent_skills_dir}}/mcps/{{mcp}}.yml"
+    mcp_file="{{_agent_skills_dir}}/mcps-available/{{mcp}}.yml"
     if [[ ! -f "$mcp_file" ]]; then
       echo "ERROR: MCP '{{mcp}}' not found." >&2
       echo "Available:" >&2
-      ls "{{_agent_skills_dir}}"/mcps/*.yml 2>/dev/null | xargs -I{} basename {} .yml >&2
+      ls "{{_agent_skills_dir}}"/mcps-available/*.yml 2>/dev/null | xargs -I{} basename {} .yml >&2
       exit 1
     fi
     # Add to .claude-profiles.yml
@@ -160,7 +160,7 @@ claude-rm-mcp mcp:
     else
       echo "No .claude-profiles.yml found."
     fi
-    mcp_file="{{_agent_skills_dir}}/mcps/{{mcp}}.yml"
+    mcp_file="{{_agent_skills_dir}}/mcps-available/{{mcp}}.yml"
     if [[ -f "$mcp_file" ]]; then
       remove_cmd=$(yq -r '.remove // ""' "$mcp_file")
       if [[ -n "$remove_cmd" && "$remove_cmd" != "null" ]]; then
@@ -210,7 +210,31 @@ claude-update-archive:
 claude-rebuild-index:
     @{{_agent_skills_dir}}/scripts/index-rebuild.sh
 
+# --- Inventory ---
+
+# Show the inventory: all tools, marked active/inactive, with profile membership
+claude-list:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh
+
+# Show only tools of a specific type (skill, agent, mcp, plugin)
+claude-list-type type:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh --type={{type}}
+
+# Show tools in a specific profile
+claude-list-profile profile:
+    @{{_agent_skills_dir}}/scripts/tool-list.sh --profile={{profile}}
+
+# --- Tests ---
+
+# Run all bash tests
+test:
+    @{{_agent_skills_dir}}/tests/run.sh
+
 # --- Setup ---
+
+# One-time global discovery — populate the central pool from existing system state
+claude-bootstrap:
+    @{{_agent_skills_dir}}/scripts/bootstrap.sh
 
 # Interactive first-time project setup
 claude-init:
