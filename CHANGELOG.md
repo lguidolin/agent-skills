@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/lguidolin/agent-skills/compare/v0.4.0...v0.5.0) (2026-05-05)
+
+
+### Features
+
+* centralized tool pool with per-project profile activation ([#11](https://github.com/lguidolin/agent-skills/issues/11)) ([00f40c3](https://github.com/lguidolin/agent-skills/commit/00f40c327d120eb4c6ea90c72292843ac7d1ac4e))
+
 ## [0.4.0](https://github.com/lguidolin/agent-skills/compare/v0.3.1...v0.4.0) (2026-05-01)
 
 
