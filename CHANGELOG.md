@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/lguidolin/agent-skills/compare/v0.5.0...v0.6.0) (2026-06-13)
+
+
+### Features
+
+* add engineering constitution skills ([#13](https://github.com/lguidolin/agent-skills/issues/13)) ([ca8d854](https://github.com/lguidolin/agent-skills/commit/ca8d854fcf997e67cdba460a9e0395fb4f63feff))
+
 ## [0.5.0](https://github.com/lguidolin/agent-skills/compare/v0.4.0...v0.5.0) (2026-05-05)
 
 
