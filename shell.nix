@@ -9,7 +9,7 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     # Node.js 20 LTS + pnpm (matches Dockerfiles and CI)
     nodejs_20
-    nodePackages.pnpm
+    pnpm
 
     just
     git
