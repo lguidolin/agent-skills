@@ -146,6 +146,30 @@ code:
 | `just test` | Run the bash test suite |
 | `just claude-help` | Show all commands |
 
+## Constitution Skills
+
+The **engineering constitution** is a portable charter of engineering practice, decomposed into 16 individually-loadable skills. Each skill's `description` controls *when* it loads, so guidance reaches an agent exactly when the task calls for it — and stack-specific guidance (e.g. Kubernetes/Azure) stays dormant in projects that don't use that stack.
+
+- **12 Tier-1 skills** — universal building and operating discipline (design, decisions, commits, testing, code craft, UI/a11y, CI gates, observability, security, performance, resilience). Load in every project.
+- **4 Tier-2 skills** — stack mechanisms (`postgres-postgraphile-rls-and-sql`, `graphql-contract-testing`, `zero-downtime-migrations`, `cloud-delivery-aks`). Self-activate only when their tooling/topic is present.
+
+The full charter lives in `docs/engineering-constitution.md`; each skill links back to its articles.
+
+### Install
+
+```bash
+# One-time: clone the pool (if you haven't already)
+git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
+
+# Personal, all-projects: symlink all 16 into ~/.claude/skills/
+~/local/agent-skills/scripts/constitution-install.sh --global
+
+# Per-project, team-shared: copy the portable set into a repo's .claude/skills/ and commit it
+~/local/agent-skills/scripts/constitution-install.sh --project ~/path/to/repo
+```
+
+`--project` copies the 15 stack-portable skills and **excludes `cloud-delivery-aks`** (a project with no Kubernetes deploy shouldn't carry Azure guidance); pass `--all` to include it. The `--global` symlinks auto-update when you `git pull` the pool.
+
 ## Document Lifecycle
 
 Specs and plans written during brainstorming are human-friendly but token-expensive. After implementation and merge, they're converted to compact **decision records**:
