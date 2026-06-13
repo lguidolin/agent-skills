@@ -7,8 +7,8 @@ pkgs.mkShell {
   name = "agent-skills";
 
   buildInputs = with pkgs; [
-    # Node.js 20 LTS + pnpm (matches Dockerfiles and CI)
-    nodejs_20
+    # Node.js 22 LTS + pnpm (matches Dockerfiles and CI)
+    nodejs_22
     pnpm
 
     just
