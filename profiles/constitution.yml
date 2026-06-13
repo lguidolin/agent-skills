@@ -1,0 +1,26 @@
+name: constitution
+description: "The always-on engineering constitution skills — universal building and operating discipline that applies to every project"
+
+# The 12 Tier-1 skills load in every project. The 4 Tier-2 stack skills
+# (postgres-postgraphile-rls-and-sql, graphql-contract-testing,
+# zero-downtime-migrations, cloud-delivery-aks) are deliberately NOT listed
+# here — they self-activate via their stack-specific descriptions only when
+# the relevant tooling is present, so Azure/k8s guidance stays dormant
+# in projects that don't deploy to Kubernetes.
+skills:
+  - engineering-constitution
+  - designing-before-building
+  - recording-decisions
+  - conventional-commits-and-releases
+  - tests-as-a-control
+  - change-hygiene-and-code-craft
+  - interface-craft-and-accessibility
+  - verification-gate-and-automation
+  - observability-and-slos
+  - defense-in-depth-security
+  - performance-and-scale
+  - resilience-and-deploy-safety
+
+hooks:
+  pre_session: true
+  post_session: false
