@@ -122,7 +122,34 @@ set -e
 assert_exit_nonzero "$rc"
 if grep -q "fakepower" <<<"$err"; then _pass; else _fail "error should name the owning plugin" "got: $err"; fi
 
+# This repo ships as a plugin too, and its root skills/ is the conventional
+# plugin skills path — so a marketplace install would report every skill as
+# plugin-owned. That is not a real conflict (both copies are this repo), so it
+# must warn and proceed rather than abort.
+rm -rf "$HOME/.claude/plugins/cache/mp/fakepower"
+mkdir -p "$HOME/.claude/plugins/cache/mp/lguidolin-agent-skills/0.6.0/skills/ship-it"
+echo "x" > "$HOME/.claude/plugins/cache/mp/lguidolin-agent-skills/0.6.0/skills/ship-it/SKILL.md"
+set +e
+out=$("$INSTALL" --global 2>&1); rc=$?
+set -e
+assert_exit_zero "$rc"
+if grep -qi "duplicate\|also installed as a plugin" <<<"$out"; then _pass; else _fail "self-collision should warn about duplicates" "got: $out"; fi
+n=$(find "$HOME/.claude/skills" -maxdepth 1 -type l | wc -l)
+if [[ "$n" -eq "$pool_count" ]]; then _pass; else _fail "self-collision blocked the install ($n linked)"; fi
+
+# A genuine third-party collision must still abort, even alongside our own.
+mkdir -p "$HOME/.claude/plugins/cache/mp/otherpower/1.0.0/skills/ship-it"
+echo "x" > "$HOME/.claude/plugins/cache/mp/otherpower/1.0.0/skills/ship-it/SKILL.md"
+set +e
+err=$("$INSTALL" --global 2>&1); rc=$?
+set -e
+assert_exit_nonzero "$rc"
+if grep -q "otherpower" <<<"$err"; then _pass; else _fail "third-party collision should still abort" "got: $err"; fi
+rm -rf "$HOME/.claude/plugins/cache/mp/otherpower" "$HOME/.claude/plugins/cache/mp/lguidolin-agent-skills"
+
 # Override escape hatch still works.
+mkdir -p "$HOME/.claude/plugins/cache/mp/fakepower/1.0.0/skills/ship-it"
+echo "x" > "$HOME/.claude/plugins/cache/mp/fakepower/1.0.0/skills/ship-it/SKILL.md"
 set +e
 ALLOW_PLUGIN_SKILL_COLLISION=1 "$INSTALL" --global >/dev/null 2>&1; rc=$?
 set -e

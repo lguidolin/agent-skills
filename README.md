@@ -62,6 +62,21 @@ These are the rules that make the install repeatable rather than a pile of
 
 Restart Claude Code after installing so it re-reads the skills directory.
 
+### Pick one install path
+
+This repo is also installable as a Claude Code plugin from its marketplace
+entry, and a plugin's `skills/` directory is auto-discovered — which is the same
+directory this script installs from. Using **both** gives you every skill twice.
+
+`install.sh` detects this: it recognises collisions coming from our own plugin,
+warns, and proceeds (a collision with any *other* plugin still aborts). But the
+duplication is real, so choose one:
+
+- **`install.sh`** — recommended. Symlinks track the repo, and you control
+  which skills reach a given project.
+- **Marketplace plugin** — `/plugin`. Simpler to install; updates follow plugin
+  releases rather than `git pull`.
+
 ### Prerequisites
 
 `bash` and `git`. Nothing else — `just` is optional convenience, and the test

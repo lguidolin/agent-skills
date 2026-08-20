@@ -67,8 +67,20 @@ done
 
 # An installed plugin owns the skills it ships. Installing a same-named skill
 # would shadow one copy with the other, so refuse rather than pick a winner.
+#
+# This repo is itself installable as a plugin (.claude-plugin/), and its root
+# skills/ directory is the conventional plugin skills path — so a user who
+# installed it from the marketplace would see every skill reported as
+# plugin-owned and be unable to run this script at all. Collisions coming from
+# our own plugin are therefore not real conflicts: both copies are this repo.
+# Skip them, and warn, since having both installed means duplicate skills.
+SELF_PLUGIN="lguidolin-agent-skills"
 if [[ -x "$SCRIPT_DIR/plugin-skills.sh" && "${ALLOW_PLUGIN_SKILL_COLLISION:-0}" != "1" ]]; then
-  owned=$("$SCRIPT_DIR/plugin-skills.sh" --with-plugin 2>/dev/null || true)
+  owned=$("$SCRIPT_DIR/plugin-skills.sh" --with-plugin 2>/dev/null | grep -v "^$SELF_PLUGIN"$'\t' || true)
+  if "$SCRIPT_DIR/plugin-skills.sh" --with-plugin 2>/dev/null | grep -q "^$SELF_PLUGIN"$'\t'; then
+    echo "NOTE: '$SELF_PLUGIN' is also installed as a plugin, which ships these same skills." >&2
+    echo "      Pick one install path — plugin or this script — or you will carry duplicates." >&2
+  fi
   if [[ -n "$owned" ]]; then
     collisions=0
     for skill in "${skills[@]}"; do
