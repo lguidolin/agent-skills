@@ -36,6 +36,49 @@ Every non-trivial decision produces a record with a fixed structure, so any read
 - The *why* and the *rejected alternatives* are the two highest-value sections. A record without them is a landmine.
 - Write the record at the **Record** stage of the pipeline (see `designing-before-building`), after Execute.
 
+## Bundled Tooling
+
+This skill ships its own scripts and template, so they work in any repo the
+skill is installed into. They live next to `SKILL.md`:
+
+```
+recording-decisions/
+  scripts/doc-archive.sh      find specs/plans lacking a decision record
+  scripts/index-rebuild.sh    regenerate the index from record frontmatter
+  templates/decision-record.md
+```
+
+Locate them — the skill may be installed per-project or globally:
+
+```bash
+for base in .claude/skills ~/.claude/skills; do
+  d="$base/recording-decisions/scripts"
+  [ -d "$d" ] && echo "$d" && break
+done
+```
+
+**`doc-archive.sh [specs_dir] [plans_dir] [decisions_dir] [archive_dir]`**
+Lists specs with no matching decision record and prints a conversion prompt
+built from the template. Defaults to `docs/superpowers/{specs,plans,decisions,archive}`.
+
+**`index-rebuild.sh [decisions_dir] [output_file]`**
+Rewrites `docs/superpowers/index.md` from every record's frontmatter — an
+Active table (component, title, date, dependencies) and a Superseded table
+(component, title, superseded by). Regenerated wholesale, so never hand-edit it.
+
+Both are dependency-free bash: a project using this skill does not need `yq`,
+`jq`, or a task runner. If the scripts are missing, the procedures above are
+self-contained — do the work directly.
+
+### Why this matters for context
+
+Specs and plans are verbose on purpose; they are written for a human following
+the reasoning. That verbosity is charged to context every time Claude opens
+one. A decision record keeps what is needed to move forward — decisions, the
+why, interfaces, constraints, gotchas, rejected alternatives — in ~30-50 lines,
+while the original spec moves to `archive/` where it stays readable for humans
+and costs nothing until deliberately opened.
+
 ## When NOT to use
 
 Trivial, self-evident changes don't need a record. The test: *would someone later ask "why was this done this way?"* If yes, record it.

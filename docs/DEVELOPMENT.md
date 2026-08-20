@@ -63,7 +63,10 @@ Two suites, both pure bash — no `jq`/`yq` needed:
 - **`test_install.sh`** exercises `scripts/install.sh` against an isolated
   `HOME`: global symlinking, idempotency, replacing stale real directories left
   by older installs, project copying, stack-specific exclusion, and the
-  plugin-collision refusal.
+  plugin-collision refusal. It also verifies that a skill's bundled
+  `scripts/`/`templates/` survive both install modes with the executable bit
+  intact, that the bundled scripts run from the installed location, and that
+  they stay free of `yq`/`jq`/`just` dependencies.
 
 Add a skill → `test_skills.sh` covers it automatically. There is nothing to
 register.

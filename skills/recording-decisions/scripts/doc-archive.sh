@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Identify unconverted specs/plans and generate a conversion prompt
+# doc-archive.sh — find specs/plans that still lack a decision record and emit
+# a conversion prompt for them.
+#
 # Usage: doc-archive.sh [specs_dir] [plans_dir] [decisions_dir] [archive_dir]
+#   defaults: docs/superpowers/{specs,plans,decisions,archive}
+#
+# Ships with the recording-decisions skill so it works in any repo the skill is
+# installed into. Specs and plans are verbose by design — good for humans,
+# expensive in context. Converting them to compact decision records keeps the
+# essential decisions available to Claude while the full narrative stays on
+# disk, archived, where it costs nothing until someone deliberately opens it.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPECS_DIR="${1:-docs/superpowers/specs}"
@@ -46,7 +55,12 @@ done
 echo ""
 
 # Generate conversion prompt
-TEMPLATE=$(cat "$SCRIPT_DIR/../templates/decision-record.md")
+TEMPLATE_FILE="$SCRIPT_DIR/../templates/decision-record.md"
+if [[ ! -f "$TEMPLATE_FILE" ]]; then
+  echo "doc-archive: missing template at $TEMPLATE_FILE" >&2
+  exit 1
+fi
+TEMPLATE=$(cat "$TEMPLATE_FILE")
 
 echo "=== CONVERSION PROMPT ==="
 echo ""
@@ -68,6 +82,6 @@ for spec in "${unconverted[@]}"; do
   echo "  - $spec"
 done
 echo ""
-echo "After conversion, run: just claude-rebuild-index"
+echo "After conversion, run: $SCRIPT_DIR/index-rebuild.sh"
 echo ""
 echo "---"

@@ -7,11 +7,15 @@ stack-specific guidance, and repo automation.
 
 ```
 skills/       → The skills (SKILL.md per directory) — the product
-scripts/      → install.sh, plugin-skills.sh, doc lifecycle helpers
+scripts/      → install.sh (deploy the pool), plugin-skills.sh (collision check)
 tests/        → Bash test suite (tests/run.sh) — skill lint + install
 docs/         → Setup guide, constitution reference, decision archive
-templates/    → decision-record.md, used by doc-archive.sh
 ```
+
+A skill that needs tooling bundles it under `skills/<name>/scripts/` and
+`skills/<name>/templates/`, referenced relative to its `SKILL.md` — see
+`recording-decisions`. Skills must never reference this repo's `Justfile`;
+it does not exist where they are installed.
 
 There is no profile/activation system: skills install globally into
 `~/.claude/skills/` (or are copied into a project's `.claude/skills/`).
@@ -33,7 +37,8 @@ See "What Belongs in This Repo" in README.md.
 
 - Every skill lives in `skills/<name>/SKILL.md`
 - A skill name must not collide with one shipped by an installed plugin;
-  `scripts/plugin-skills.sh` lists those names and the registry rejects collisions
+  `scripts/plugin-skills.sh` lists those names; `install.sh` and the test suite
+  both refuse a collision
 - YAML frontmatter with `name` and `description` fields
 - Description starts with trigger conditions ("Use when...")
 - Every skill has: Overview, When to Use, When NOT to Use, Process

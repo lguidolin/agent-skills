@@ -10,10 +10,6 @@ pkgs.mkShell {
     just
     git
     gh
-
-    # yq-go is Mike Farah's Go implementation (v4) — used by index-rebuild.sh.
-    # The Python kislyuk yq has a different DSL, so pin the flavor here.
-    yq-go
   ];
 
   shellHook = ''
@@ -25,8 +21,6 @@ pkgs.mkShell {
     echo "---------------------------------------------------------"
     echo "  agent-skills shell"
     echo "---------------------------------------------------------"
-    echo ""
-    echo "  yq:   $(yq --version)"
     echo ""
     echo "  just test                    Run the test suite"
     echo "  scripts/install.sh --global  Install skills into ~/.claude/skills"

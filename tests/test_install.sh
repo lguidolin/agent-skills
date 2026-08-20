@@ -49,6 +49,70 @@ PROJ2="$TEST_HOME/proj2"; mkdir -p "$PROJ2"
 "$INSTALL" --project "$PROJ2" --all >/dev/null
 assert_file_exists "$PROJ2/.claude/skills/cloud-delivery-aks/SKILL.md"
 
+# --- Bundled skill assets survive both install modes ---
+# A skill may ship scripts/templates next to SKILL.md so it works standalone in
+# whatever repo it lands in. Both modes must carry those along, executable.
+assert_file_exists "$PROJ/.claude/skills/recording-decisions/scripts/index-rebuild.sh"
+assert_file_exists "$PROJ/.claude/skills/recording-decisions/scripts/doc-archive.sh"
+assert_file_exists "$PROJ/.claude/skills/recording-decisions/templates/decision-record.md"
+if [[ -x "$PROJ/.claude/skills/recording-decisions/scripts/index-rebuild.sh" ]]; then
+  _pass
+else
+  _fail "project install lost the executable bit on index-rebuild.sh"
+fi
+if [[ -x "$HOME/.claude/skills/recording-decisions/scripts/index-rebuild.sh" ]]; then
+  _pass
+else
+  _fail "global install cannot reach recording-decisions scripts"
+fi
+
+# The bundled scripts must run with no external tooling (no yq/jq/just), from
+# the copied location, against a project's own docs tree.
+WORK="$TEST_HOME/work"; mkdir -p "$WORK/docs/superpowers/decisions"
+cat > "$WORK/docs/superpowers/decisions/2026-01-01-example.md" <<'REC'
+---
+title: "Example decision"
+date: 2026-01-01
+component: infra
+status: implemented
+supersedes: null
+dependencies: [alpha, beta]
+---
+body
+REC
+cat > "$WORK/docs/superpowers/decisions/2026-01-02-old.md" <<'REC'
+---
+title: Old decision
+date: 2026-01-02
+component: infra
+status: superseded
+supersedes: 2026-01-01-example
+dependencies: []
+---
+body
+REC
+set +e
+( cd "$WORK" && "$PROJ/.claude/skills/recording-decisions/scripts/index-rebuild.sh" >/dev/null 2>&1 )
+rc=$?
+set -e
+assert_exit_zero "$rc"
+assert_file_exists "$WORK/docs/superpowers/index.md"
+assert_file_contains "$WORK/docs/superpowers/index.md" "Example decision"
+assert_file_contains "$WORK/docs/superpowers/index.md" "alpha, beta"
+# Superseded records belong in their own table, not the active one.
+assert_file_contains "$WORK/docs/superpowers/index.md" "2026-01-01-example"
+if [[ "$(grep -c 'Old decision' "$WORK/docs/superpowers/index.md")" -eq 1 ]]; then _pass; else _fail "superseded record mis-filed"; fi
+
+# Dependency-free: these ship into arbitrary repos, so they must not reach for
+# a YAML toolchain or a task runner.
+for tool in yq jq just; do
+  if grep -qE "(^|[^a-z-])$tool " "$PROJ/.claude/skills/recording-decisions/scripts/"*.sh; then
+    _fail "bundled scripts depend on '$tool'" "they must run with bash alone"
+  else
+    _pass
+  fi
+done
+
 # --- Refuses a name an installed plugin already owns ---
 mkdir -p "$HOME/.claude/plugins/cache/mp/fakepower/1.0.0/skills/ship-it"
 echo "x" > "$HOME/.claude/plugins/cache/mp/fakepower/1.0.0/skills/ship-it/SKILL.md"

@@ -39,12 +39,13 @@ claude-plugin-skills:
 # --- Docs & Archive ---
 
 # Identify unconverted specs/plans and generate conversion prompt
+# (the scripts ship inside the recording-decisions skill)
 claude-update-archive:
-    @{{_agent_skills_dir}}/scripts/doc-archive.sh
+    @{{_agent_skills_dir}}/skills/recording-decisions/scripts/doc-archive.sh
 
 # Rebuild master decision index from decision records
 claude-rebuild-index:
-    @{{_agent_skills_dir}}/scripts/index-rebuild.sh
+    @{{_agent_skills_dir}}/skills/recording-decisions/scripts/index-rebuild.sh
 
 # --- Tests ---
 

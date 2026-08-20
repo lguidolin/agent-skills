@@ -7,31 +7,65 @@ stack-specific guidance, and repo automation — and installs them where Claude
 Code looks for them. It is deliberately **not** a mirror of other people's skill
 libraries.
 
-## Quick Start
+## Install
 
-1. **Clone this repo** to a stable location:
-   ```bash
-   git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
-   ```
-
-2. **Install the skills** — symlinks into `~/.claude/skills/`, so they update
-   whenever you `git pull`:
-   ```bash
-   ~/local/agent-skills/scripts/install.sh --global
-   ```
-
-That is the whole setup. Claude Code discovers the skills in every project.
-
-To share a subset with a team instead, copy them into a repo and commit them:
+Clone the repo to a stable location, then pick one of the two install modes.
+`install.sh` is idempotent — re-run it any time, including after `git pull`.
 
 ```bash
+git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
+```
+
+### Personal (all your projects)
+
+Symlinks every skill into `~/.claude/skills/`, so they track this repo and a
+`git pull` updates them everywhere at once:
+
+```bash
+~/local/agent-skills/scripts/install.sh --global
+```
+
+Verify — you should see one symlink per skill and no broken links:
+
+```bash
+ls -l ~/.claude/skills | head
+find ~/.claude/skills -maxdepth 1 -xtype l    # must print nothing
+```
+
+### Team (one repo, committed)
+
+Copies the skills into a project so they ship with it:
+
+```bash
+cd /path/to/project
 ~/local/agent-skills/scripts/install.sh --project .        # portable skills
 ~/local/agent-skills/scripts/install.sh --project . --all  # include stack-specific
+git add .claude/skills && git commit -m "chore: add engineering skills"
 ```
 
 Stack-specific skills (`cloud-delivery-aks`, `postgres-postgraphile-rls-and-sql`,
-`graphql-contract-testing`) are held back from `--project` unless you pass
-`--all` — a repo with no Kubernetes deploy should not carry Azure guidance.
+`graphql-contract-testing`) are held back unless you pass `--all` — a repo with
+no Kubernetes deploy should not carry Azure guidance.
+
+### What the installer guarantees
+
+These are the rules that make the install repeatable rather than a pile of
+`ln` commands, and each is covered by `tests/test_install.sh`:
+
+| Guarantee | Why |
+|---|---|
+| **Idempotent** — re-running changes nothing | Safe to run after every `git pull` |
+| **Stale copies replaced** — a real directory left by an older install is swapped for a symlink | Otherwise that one skill silently stops updating |
+| **Collision refusal** — aborts if a skill name is already shipped by an installed plugin | Prevents shadowing the maintained copy; see below |
+| **Bundled assets travel** — a skill's `scripts/` and `templates/` come along, executable | Skills stay self-contained wherever they land |
+| **No external tooling** — bash only, no `jq`/`yq`/`just` | Installs on a bare machine |
+
+Restart Claude Code after installing so it re-reads the skills directory.
+
+### Prerequisites
+
+`bash` and `git`. Nothing else — `just` is optional convenience, and the test
+suite is pure bash.
 
 ## Why There Is No Profile System
 
@@ -55,9 +89,18 @@ invoked:
 Gating skills saves roughly a thousand tokens, while the machinery cost ~2,600
 lines of scripts, profiles, hooks, and tests to maintain 1,600 lines of skills.
 
-**What actually costs context is MCP tool schemas**, which load in full. Claude
-Code already gates those natively — per-project `.mcp.json` and `enabledPlugins`
-in `.claude/settings.json`. Use those; this repo does not wrap them.
+**What actually costs context** is different from what the profile system was
+gating:
+
+- **MCP tool schemas**, which load in full. Claude Code already gates those
+  natively — per-project `.mcp.json` and `enabledPlugins` in
+  `.claude/settings.json`. Use those; this repo does not wrap them.
+- **Long design documents**, which are charged in full every time one is
+  opened. That is a real cost, and it is what the
+  [document lifecycle](#document-lifecycle) addresses — by shrinking the
+  artifact rather than by hiding it behind a profile.
+
+Skill *gating* was the wrong lever. Artifact *reduction* is the right one.
 
 ## What Belongs in This Repo
 
@@ -122,19 +165,41 @@ self-activate only when the relevant tooling is present. See
 
 ## Document Lifecycle
 
-Specs and plans written during design are human-friendly but token-expensive.
-After implementation and merge, they are converted to compact **decision
-records**:
+This is the one context-saving mechanism in the repo that earns its keep.
+
+Specs and plans are verbose *on purpose* — they are written for a human
+following the reasoning. That verbosity is charged to context every time Claude
+opens one. After the work merges, each spec is reduced to a **decision record**:
+~30-50 lines carrying only what is needed to move forward — the decisions and
+their *why*, interfaces, constraints, gotchas, rejected alternatives. The
+original moves to `archive/`, still readable by a human, costing nothing until
+someone deliberately opens it.
 
 ```
 docs/superpowers/
-  specs/      → in-flight specs
+  specs/      → in-flight specs (verbose, human-facing)
   plans/      → in-flight plans
-  archive/    → converted decision records
+  decisions/  → compact decision records (what Claude reads)
+  archive/    → originals, preserved after conversion
+  index.md    → generated from decision frontmatter
 ```
 
-`just claude-update-archive` finds unconverted documents; `just
-claude-rebuild-index` rebuilds the master index.
+The tooling ships **inside the `recording-decisions` skill**, not in this
+repo's `scripts/`, so it works in any project the skill is installed into:
+
+```
+recording-decisions/
+  scripts/doc-archive.sh      list specs lacking a decision record
+  scripts/index-rebuild.sh    regenerate index.md from frontmatter
+  templates/decision-record.md
+```
+
+Both are dependency-free bash. `ship-it` locates them at ship time and falls
+back to doing the work by hand if the skill is not installed — no skill in this
+repo depends on this repo's Justfile.
+
+From inside this repo you can also use `just claude-update-archive` and
+`just claude-rebuild-index`.
 
 ## Adding a Skill
 
@@ -147,6 +212,12 @@ description: Use when [trigger conditions]
 ---
 ```
 
+A skill may bundle its own assets — put them in `skills/<name>/scripts/` and
+`skills/<name>/templates/` and reference them by a path relative to `SKILL.md`.
+Both install modes carry them along with the executable bit intact, which is how
+a skill stays self-contained in whatever repo it lands in. Never reference this
+repo's `Justfile` from a skill: it will not exist where the skill is installed.
+
 The tests enforce that `name` matches the directory, that `description` states
 trigger conditions, and that the name does not collide with a plugin-owned one.
 Check what is taken before you start:
@@ -156,12 +227,6 @@ just claude-plugin-skills
 ```
 
 Then run `just test`.
-
-## Prerequisites
-
-- `bash`, `git`
-- `just` (optional — the scripts run standalone)
-- `yq` (only for `claude-rebuild-index`)
 
 ## License
 

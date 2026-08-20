@@ -3,8 +3,8 @@
 #
 # Installed plugins are the source of truth for the skills they ship. A local
 # skill in skills/ that reuses one of these names would shadow (or be
-# shadowed by) the plugin copy depending on symlink order, so the registry and
-# profile activation refuse such names and use this script to detect them.
+# shadowed by) the plugin copy depending on symlink order, so install.sh and
+# tests/test_skills.sh refuse such names and use this script to detect them.
 #
 # Usage:
 #   plugin-skills.sh                 # every plugin-owned skill name, one per line

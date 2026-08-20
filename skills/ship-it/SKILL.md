@@ -119,12 +119,31 @@ Wait for user confirmation (e.g., "merged", "done", "it's merged").
 
 ### Phase 5: Post-Merge — Archive Decision Records
 
+Specs and plans are verbose by design — good for a human reading the history,
+expensive every time Claude loads one. Converting them to compact decision
+records keeps the essential decisions cheap to read while the full narrative
+stays on disk, archived, costing nothing until someone opens it deliberately.
+
 **Only after the PR is merged**, check for unconverted specs/plans:
 
 ```bash
 ls docs/superpowers/specs/ 2>/dev/null
 ls docs/superpowers/decisions/ 2>/dev/null
 ```
+
+The `recording-decisions` skill ships two helpers for this. Locate them — the
+skill may be installed in the project or globally:
+
+```bash
+for base in .claude/skills ~/.claude/skills; do
+  d="$base/recording-decisions/scripts"
+  [ -d "$d" ] && echo "$d" && break
+done
+```
+
+If found, `$d/doc-archive.sh` lists unconverted specs and prints a conversion
+prompt, and `$d/index-rebuild.sh` regenerates the index. If not found, do the
+same work by hand using the steps below — they are self-contained.
 
 **If unconverted specs/plans exist:**
 
@@ -148,9 +167,11 @@ ls docs/superpowers/decisions/ 2>/dev/null
    - Move original spec to `docs/superpowers/archive/specs/`
    - Move matching plan to `docs/superpowers/archive/plans/`
 
-3. Rebuild the master index:
-   - Regenerate `docs/superpowers/index.md` from all decision record frontmatter
-   - Or run: `just claude-rebuild-index`
+3. Rebuild the master index — regenerate `docs/superpowers/index.md` from every
+   decision record's frontmatter, grouped into an **Active Decisions** table
+   (component, title, date, dependencies) and a **Superseded** table
+   (component, title, superseded by). Run `$d/index-rebuild.sh` if you located
+   it above; otherwise write the file directly.
 
 4. Commit the archival:
    ```bash
