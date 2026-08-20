@@ -12,22 +12,34 @@ git clone https://github.com/lguidolin/agent-skills.git /tmp/lguidolin-agent-ski
 
 # Copy skills into your project
 mkdir -p .github/skills
-cp -r /tmp/lguidolin-agent-skills/skills/* .github/skills/
+cp -r /tmp/lguidolin-agent-skills/skills-available/* .github/skills/
 ```
 
-This installs:
-- `.github/skills/repo-automation-setup/SKILL.md`
+The pool lives in `skills-available/`. It holds house rules (the engineering
+constitution), stack-specific skills, and repo automation — copy all of it, or
+cherry-pick the directories you want:
+
+- `.github/skills/init-repo-CI/SKILL.md`
 - `.github/skills/commit-history-rewrite/SKILL.md`
-- `.github/skills/branch-push-pr/SKILL.md`
+- `.github/skills/ship-it/SKILL.md`
+- `.github/skills/engineering-constitution/SKILL.md` (+ 11 Tier-1 discipline skills)
 
 ### Recommended Companion Skills
 
 These skill libraries are recommended companions that provide a complete workflow alongside the core skills above. **Ask the user if they would like to install either or both:**
 
+These are **not** vendored into this repo — install them from their own
+repositories so you get maintained, up-to-date copies rather than a stale fork.
+
 | Repo | What it provides | Install command |
 |------|-----------------|-----------------|
-| [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | 20 production engineering skills + agent personas (code-reviewer, test-engineer, security-auditor) | See below |
+| [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Production engineering skills (spec-driven-development, source-driven-development, context-engineering, browser-testing-with-devtools, …) + agent personas (code-reviewer, test-engineer, security-auditor) | See below |
 | [obra/superpowers](https://github.com/obra/superpowers) | Workflow skills (brainstorming, TDD, systematic debugging, subagent-driven development, code review) | See below |
+
+> **Name collisions.** Both companions ship a `test-driven-development` skill.
+> Copying both into one `.github/skills/` means the second copy overwrites the
+> first — pick one. For Claude Code users, prefer the superpowers plugin and
+> skip its duplicates when copying addyosmani's set.
 
 **To install addyosmani/agent-skills:**
 ```bash
@@ -46,7 +58,7 @@ cp -r /tmp/obra-superpowers/skills/* .github/skills/
 
 ### Repository Permissions
 
-The `repo-automation-setup` skill creates GitHub Actions workflows that require specific repository permissions to function. These must be configured **before the first push to the default branch**, or the release automation will fail.
+The `init-repo-CI` skill creates GitHub Actions workflows that require specific repository permissions to function. These must be configured **before the first push to the default branch**, or the release automation will fail.
 
 #### Required: GitHub Actions Workflow Permissions
 
@@ -88,12 +100,12 @@ After the initial automation commit is on your default branch, configure branch 
 
 ### Verify
 
-After copying, confirm the skills appear when you type `/` in Copilot Chat. You should see `repo-automation-setup` and `commit-history-rewrite` in the list (plus any companion skills you installed).
+After copying, confirm the skills appear when you type `/` in Copilot Chat. You should see `init-repo-CI` and `commit-history-rewrite` in the list (plus any companion skills you installed).
 
 ## Usage
 
-- **Set up automation:** Ask Copilot to set up conventional commits and release-please, or invoke `/repo-automation-setup`
+- **Set up automation:** Ask Copilot to set up conventional commits and release-please, or invoke `/init-repo-CI`
 - **Rewrite history:** Ask Copilot to clean up commit history, or invoke `/commit-history-rewrite`
-- **Push changes:** Ask Copilot to push your changes, or invoke `/branch-push-pr`
+- **Push changes:** Ask Copilot to push your changes, or invoke `/ship-it`
 
 Skills also activate automatically when Copilot detects a relevant task based on the skill's `description` field.

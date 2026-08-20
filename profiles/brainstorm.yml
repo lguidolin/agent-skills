@@ -1,14 +1,15 @@
 name: brainstorm
 description: "Ideation, spec writing, and design exploration"
 
+# Ideation methodology (brainstorming, writing-plans) comes from the
+# superpowers plugin — see `plugins:` below. Only house skills that
+# superpowers does not cover are listed here.
 skills:
-  - brainstorming
-  - idea-refine
-  - spec-driven-development
-  - planning-and-task-breakdown
-  - writing-plans
-  - context-engineering
-  - documentation-and-adrs
+  - designing-before-building
+  - recording-decisions
+
+plugins:
+  - superpowers
 
 mcps:
   - context7

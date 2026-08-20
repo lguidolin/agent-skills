@@ -1,10 +1,15 @@
 name: ship
 description: "Push, PR, archive decisions, merge cleanup"
 
+# finishing-a-development-branch and requesting/receiving-code-review come
+# from the superpowers plugin — see `plugins:` below.
 skills:
   - ship-it
-  - finishing-a-development-branch
-  - code-review-and-quality
+  - conventional-commits-and-releases
+  - resilience-and-deploy-safety
+
+plugins:
+  - superpowers
 
 mcps:
   - context7

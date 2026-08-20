@@ -11,6 +11,26 @@ require_yq() {
 }
 require_yq
 
+# An installed plugin owns the skills it ships. Registering a local skill under
+# the same name would shadow one copy with the other depending on symlink order,
+# so refuse it loudly here rather than let activation silently pick a winner.
+# Set ALLOW_PLUGIN_SKILL_COLLISION=1 to override (e.g. while migrating a name).
+reject_plugin_skill_collision() {
+  local name="$1"
+  [[ "${ALLOW_PLUGIN_SKILL_COLLISION:-0}" == "1" ]] && return 0
+  local lister="$SCRIPT_DIR/plugin-skills.sh"
+  [[ -x "$lister" ]] || return 0
+  local owner
+  owner=$("$lister" --with-plugin 2>/dev/null | awk -F'\t' -v s="$name" '$2 == s { print $1; exit }') || true
+  [[ -n "$owner" ]] || return 0
+  echo "registry.sh: refusing to register skill '$name'." >&2
+  echo "  The installed plugin '$owner' already ships a skill with this name," >&2
+  echo "  and the plugin is the source of truth for its own skills." >&2
+  echo "  Fix: remove skills-available/$name, or rename it so it is additive." >&2
+  echo "  Override (not recommended): ALLOW_PLUGIN_SKILL_COLLISION=1" >&2
+  exit 1
+}
+
 ensure_init() {
   if [[ ! -f "$REG" ]]; then
     printf 'version: 1\nassets: {}\n' > "$REG"
@@ -34,6 +54,9 @@ cmd_add() {
     esac
   done
   [[ -n "$type" && -n "$source" ]] || { echo "registry.sh: add requires type= and source=" >&2; exit 1; }
+  if [[ "$type" == "skill" ]]; then
+    reject_plugin_skill_collision "$name"
+  fi
   if [[ "$name" == *,* ]]; then
     echo "registry.sh: tool name '$name' contains ',' — not allowed (CSV delimiter)" >&2
     exit 1

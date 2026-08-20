@@ -43,25 +43,66 @@ just claude-list-type skill         # filter by type
 just claude-list-profile code       # filter by profile
 ```
 
+## What Belongs in This Repo
+
+This repo is **not** a mirror of other people's skill libraries. Installed
+plugins are the source of truth for the skills they ship, and vendoring a copy
+here only creates a stale fork that shadows the maintained one.
+
+**In scope — `skills-available/`:**
+
+- **House rules** — the engineering constitution, commit conventions, review
+  gates, and deploy discipline this org follows (`engineering-constitution`,
+  `conventional-commits-and-releases`, `verification-gate-and-automation`, …).
+- **Stack-specific skills** — guidance tied to tooling we actually run
+  (`postgres-postgraphile-rls-and-sql`, `graphql-contract-testing`,
+  `zero-downtime-migrations`, `cloud-delivery-aks`).
+- **Repo automation** — `init-repo-CI`, `commit-history-rewrite`, `ship-it`.
+
+**Out of scope — install from the source instead:**
+
+| Source | Provides | Install |
+|--------|----------|---------|
+| [obra/superpowers](https://github.com/obra/superpowers) (plugin `superpowers`) | Workflow methodology: brainstorming, writing/executing plans, TDD, systematic debugging, code review, worktrees, subagent-driven development | Claude Code marketplace — `/plugin` |
+| [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Production engineering skills (spec-driven-development, source-driven-development, context-engineering, browser-testing-with-devtools, …) and agent personas | `git clone` + copy into `.github/skills/`, or add to the pool under a non-colliding name |
+
+**Enforced, not just documented.** `scripts/plugin-skills.sh` lists every skill
+name shipped by an installed plugin. `registry.sh add` refuses to register a
+pool skill that reuses one of those names, and `profile-activate.sh` refuses to
+activate a profile that lists one — both fail loudly rather than silently
+symlinking one copy over the other. `tests/test_plugin_collision.sh` asserts the
+pool and every profile stay clean. Override with
+`ALLOW_PLUGIN_SKILL_COLLISION=1` only while migrating a name.
+
+If a plugin skill is *almost* right, do not fork it — add a narrowly scoped
+house skill that says what we do differently and cross-links the plugin skill it
+complements.
+
 ## Profiles
 
-| Profile | Purpose | Typical Skills |
-|---------|---------|----------------|
-| `brainstorm` | Ideation, specs, plans | brainstorming, writing-plans, spec-driven-dev |
-| `design` | UI/UX, mockups, visual work | frontend-ui-engineering, browser-testing |
-| `code` | Implementation, debug, test | TDD, debugging, incremental-implementation |
-| `ship` | Push, PR, archive, cleanup | ship-it, finishing-a-dev-branch |
-| `minimal` | Dormant — nothing loaded | (none) |
+| Profile | Purpose | House Skills | Plugins |
+|---------|---------|--------------|---------|
+| `brainstorm` | Ideation, specs, plans | designing-before-building, recording-decisions | superpowers |
+| `design` | UI/UX, mockups, visual work | interface-craft-and-accessibility, designing-before-building | superpowers |
+| `code` | Implementation, debug, test | change-hygiene-and-code-craft, tests-as-a-control, defense-in-depth-security | superpowers |
+| `ship` | Push, PR, archive, cleanup | ship-it, conventional-commits-and-releases, resilience-and-deploy-safety | superpowers |
+| `constitution` | Always-on engineering discipline | the 12 Tier-1 constitution skills | — |
+| `minimal` | Dormant — nothing loaded | (none) | — |
 
 Activate with: `just claude-<profile>`
+
+Profiles list only **house skills** under `skills:`. Methodology skills such as
+brainstorming, writing-plans, TDD, and systematic debugging come from the
+`superpowers` plugin, listed under `plugins:` — see
+[What belongs in this repo](#what-belongs-in-this-repo).
 
 ### Per-Skill Overrides
 
 Layer individual skills on top of any profile:
 
 ```bash
-just claude-add-skill performance-optimization
-just claude-rm-skill security-and-hardening
+just claude-add-skill performance-and-scale
+just claude-rm-skill defense-in-depth-security
 ```
 
 Overrides reset when you switch profiles.
@@ -79,7 +120,7 @@ mcps:
 # Per-profile overrides
 code:
   skills_add:
-    - frontend-ui-engineering
+    - interface-craft-and-accessibility
   mcps_add:
     - browser
 ```
@@ -232,6 +273,16 @@ description: Use when [trigger conditions]
 ```
 
 Then add it to relevant profiles in `profiles/*.yml`.
+
+The name must not collide with a skill shipped by an installed plugin — see
+[What Belongs in This Repo](#what-belongs-in-this-repo). Check before you start:
+
+```bash
+$AGENT_SKILLS_DIR/scripts/plugin-skills.sh          # plugin-owned names
+$AGENT_SKILLS_DIR/scripts/plugin-skills.sh --with-plugin   # and their owners
+```
+
+Registering a colliding name fails loudly; it is not silently accepted.
 
 ### New MCP
 

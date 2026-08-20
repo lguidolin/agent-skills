@@ -61,6 +61,33 @@ if [[ -f ".claude-profiles.yml" ]]; then
   skills=("${new[@]}")
 fi
 
+# Step 5.5: Refuse skills whose names an installed plugin already owns.
+# Symlinking these would shadow the plugin copy (or be shadowed by it), so fail
+# loudly and make the profile author choose: drop the skill and list the plugin
+# under `plugins:`, or rename the local skill so it is genuinely additive.
+plugin_owned=""
+if [[ -x "$SCRIPT_DIR/plugin-skills.sh" && "${ALLOW_PLUGIN_SKILL_COLLISION:-0}" != "1" ]]; then
+  plugin_owned=$("$SCRIPT_DIR/plugin-skills.sh" --with-plugin 2>/dev/null || true)
+fi
+if [[ -n "$plugin_owned" ]]; then
+  collisions=0
+  for skill in "${skills[@]}"; do
+    [[ -z "$skill" ]] && continue
+    owner=$(awk -F'\t' -v s="$skill" '$2 == s { print $1; exit }' <<<"$plugin_owned")
+    if [[ -n "$owner" ]]; then
+      echo "ERROR: profile '$PROFILE_NAME' lists skill '$skill', which the installed plugin '$owner' already ships." >&2
+      collisions=$((collisions + 1))
+    fi
+  done
+  if [[ "$collisions" -gt 0 ]]; then
+    echo "" >&2
+    echo "The plugin is the source of truth for its own skills. Remove the name from" >&2
+    echo "the profile's 'skills:' list and add the plugin to 'plugins:' instead." >&2
+    echo "Override (not recommended): ALLOW_PLUGIN_SKILL_COLLISION=1" >&2
+    exit 1
+  fi
+fi
+
 # Step 6: Create symlinks
 linked=0
 for skill in "${skills[@]}"; do

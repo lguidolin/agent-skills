@@ -1,12 +1,14 @@
 name: design
 description: "UI/UX design, mockups, and visual work"
 
+# brainstorming and writing-plans come from the superpowers plugin —
+# see `plugins:` below.
 skills:
-  - frontend-ui-engineering
-  - browser-testing-with-devtools
-  - brainstorming
-  - spec-driven-development
-  - writing-plans
+  - interface-craft-and-accessibility
+  - designing-before-building
+
+plugins:
+  - superpowers
 
 mcps:
   - context7
