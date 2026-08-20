@@ -2,7 +2,7 @@
 # scripts/plugin-skills.sh — list skill names shipped by installed plugins.
 #
 # Installed plugins are the source of truth for the skills they ship. A local
-# skill in skills-available/ that reuses one of these names would shadow (or be
+# skill in skills/ that reuses one of these names would shadow (or be
 # shadowed by) the plugin copy depending on symlink order, so the registry and
 # profile activation refuse such names and use this script to detect them.
 #

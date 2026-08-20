@@ -14,12 +14,23 @@
 > git config --global url."https://github.com/".insteadOf "git@github.com:"
 > ```
 
-### Local / Development Install
+### Skills Install (recommended)
+
+The skills in `skills/` install directly into the directories Claude Code reads:
 
 ```bash
-git clone https://github.com/lguidolin/agent-skills.git
-claude --plugin-dir /path/to/agent-skills
+git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
+
+# Personal — symlink into ~/.claude/skills, updates on git pull
+~/local/agent-skills/scripts/install.sh --global
+
+# Team — copy into a repo's .claude/skills and commit
+~/local/agent-skills/scripts/install.sh --project .
 ```
+
+There is no profile or activation step: Claude Code loads each skill's
+description up front and the body only when the skill is invoked, so the whole
+set costs little context. See "Why There Is No Profile System" in the README.
 
 ## Slash Commands
 
@@ -51,7 +62,8 @@ Install it from the Claude Code marketplace:
 /plugin
 ```
 
-Do not copy superpowers skills into this repo. `registry.sh` and
-`profile-activate.sh` reject a pool skill whose name a plugin already owns, so a
-vendored copy fails loudly instead of silently shadowing the maintained one.
-Run `scripts/plugin-skills.sh` to see which names are taken.
+Do not copy superpowers skills into this repo. `scripts/install.sh` refuses to
+install a skill whose name a plugin already owns, and `tests/test_skills.sh`
+asserts the pool stays clean — so a vendored copy fails loudly instead of
+silently shadowing the maintained one. Run `scripts/plugin-skills.sh` to see
+which names are taken.

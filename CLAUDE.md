@@ -1,16 +1,21 @@
 # lguidolin/agent-skills
 
-Custom skills for repository automation and commit history management.
+House engineering skills for Claude Code: the engineering constitution,
+stack-specific guidance, and repo automation.
 
 ## Project Structure
 
 ```
-skills-available/  → The skill pool (SKILL.md per directory) — source of truth
-profiles/          → Profile definitions (skills + agents + mcps + plugins)
-scripts/           → Pool management: bootstrap, registry, profile activation
-tests/             → Bash test suite (tests/run.sh)
-docs/              → Setup guides for different tools
+skills/       → The skills (SKILL.md per directory) — the product
+scripts/      → install.sh, plugin-skills.sh, doc lifecycle helpers
+tests/        → Bash test suite (tests/run.sh) — skill lint + install
+docs/         → Setup guide, constitution reference, decision archive
+templates/    → decision-record.md, used by doc-archive.sh
 ```
+
+There is no profile/activation system: skills install globally into
+`~/.claude/skills/` (or are copied into a project's `.claude/skills/`).
+See "Why There Is No Profile System" in README.md.
 
 ## Skills
 
@@ -26,7 +31,7 @@ See "What Belongs in This Repo" in README.md.
 
 ## Conventions
 
-- Every skill lives in `skills-available/<name>/SKILL.md`
+- Every skill lives in `skills/<name>/SKILL.md`
 - A skill name must not collide with one shipped by an installed plugin;
   `scripts/plugin-skills.sh` lists those names and the registry rejects collisions
 - YAML frontmatter with `name` and `description` fields

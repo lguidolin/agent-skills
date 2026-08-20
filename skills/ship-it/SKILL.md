@@ -82,7 +82,7 @@ If on main, create a branch:
 Examples:
 - `feat/oauth-login`
 - `fix/null-response-handling`
-- `docs/copilot-setup-permissions`
+- `docs/release-workflow-permissions`
 
 Push:
 ```bash
