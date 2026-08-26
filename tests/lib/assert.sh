@@ -52,18 +52,6 @@ assert_file_contains() {
   if grep -qF -- "$needle" "$file"; then _pass; else _fail "$file does not contain: $needle"; fi
 }
 
-assert_yaml_eq() {
-  # assert_yaml_eq <file> <yq-path> <expected>
-  local file="$1" path="$2" expected="$3"
-  local actual
-  actual=$(yq "$path" "$file" 2>/dev/null || echo "<error>")
-  if [[ "$actual" == "$expected" ]]; then
-    _pass
-  else
-    _fail "yq '$path' on $file = '$actual'" "expected: '$expected'"
-  fi
-}
-
 assert_exit_zero() {
   if [[ "$1" == "0" ]]; then _pass; else _fail "expected exit 0, got $1"; fi
 }

@@ -1,228 +1,224 @@
 # Agent Skills
 
-Token-efficient context management for Claude Code.
+House engineering skills for Claude Code.
 
-Manage your Claude Code sessions with profile-based skill loading, MCP/LSP configuration, document lifecycle automation, and `.claudeignore` hygiene — all through simple `just` commands.
+This repo holds the skills we actually maintain — an engineering constitution,
+stack-specific guidance, and repo automation — and installs them where Claude
+Code looks for them. It is deliberately **not** a mirror of other people's skill
+libraries.
 
-## Quick Start
+## Install
 
-1. **Clone this repo** to a stable location:
-   ```bash
-   git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
-   ```
-
-2. **Set the env var** in your shell config (`.zshrc`, `.bashrc`):
-   ```bash
-   export AGENT_SKILLS_DIR="$HOME/local/agent-skills"
-   ```
-
-3. **Bootstrap** — one-time discovery of tools already installed on this machine:
-   ```bash
-   just --justfile $AGENT_SKILLS_DIR/Justfile claude-bootstrap
-   ```
-
-4. **Per project** — import the Justfile and run init once:
-   ```justfile
-   import "~/local/agent-skills/Justfile"
-   ```
-   ```bash
-   just claude-init           # migrates project-local tools into the pool
-   just claude-code           # activate the 'code' profile in this project
-   ```
-
-## How It Works
-
-`agent-skills` is a centralized inventory + per-project activation system. All your tools — skills, agents, MCPs, plugins — live in one pool at `~/local/agent-skills/{skills,agents,mcps,plugins}-available/`. A `registry.yml` tracks what exists and where.
-
-**Profile activation** is per-project: it creates symlinks in `<project>/.github/skills/` and `<project>/.claude/agents/`, writes `<project>/.mcp.json`, and toggles `enabledPlugins` in `<project>/.claude/settings.json`. Other projects are unaffected.
-
-**Inventory:**
-```
-just claude-list                    # all tools, grouped by type
-just claude-list-type skill         # filter by type
-just claude-list-profile code       # filter by profile
-```
-
-## Profiles
-
-| Profile | Purpose | Typical Skills |
-|---------|---------|----------------|
-| `brainstorm` | Ideation, specs, plans | brainstorming, writing-plans, spec-driven-dev |
-| `design` | UI/UX, mockups, visual work | frontend-ui-engineering, browser-testing |
-| `code` | Implementation, debug, test | TDD, debugging, incremental-implementation |
-| `ship` | Push, PR, archive, cleanup | ship-it, finishing-a-dev-branch |
-| `minimal` | Dormant — nothing loaded | (none) |
-
-Activate with: `just claude-<profile>`
-
-### Per-Skill Overrides
-
-Layer individual skills on top of any profile:
+Clone the repo to a stable location, then pick one of the two install modes.
+`install.sh` is idempotent — re-run it any time, including after `git pull`.
 
 ```bash
-just claude-add-skill performance-optimization
-just claude-rm-skill security-and-hardening
+git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
 ```
 
-Overrides reset when you switch profiles.
+### Personal (all your projects)
 
-### Project-Level Customization
+Symlinks every skill into `~/.claude/skills/`, so they track this repo and a
+`git pull` updates them everywhere at once:
 
-Create `.claude-profiles.yml` in your project to customize profiles:
-
-```yaml
-# MCPs always active for this project
-mcps:
-  - typescript-lsp
-  - postgres
-
-# Per-profile overrides
-code:
-  skills_add:
-    - frontend-ui-engineering
-  mcps_add:
-    - browser
+```bash
+~/local/agent-skills/scripts/install.sh --global
 ```
+
+Verify — you should see one symlink per skill and no broken links:
+
+```bash
+ls -l ~/.claude/skills | head
+find ~/.claude/skills -maxdepth 1 -xtype l    # must print nothing
+```
+
+### Team (one repo, committed)
+
+Copies the skills into a project so they ship with it:
+
+```bash
+cd /path/to/project
+~/local/agent-skills/scripts/install.sh --project .        # portable skills
+~/local/agent-skills/scripts/install.sh --project . --all  # include stack-specific
+git add .claude/skills && git commit -m "chore: add engineering skills"
+```
+
+Stack-specific skills (`cloud-delivery-aks`, `postgres-postgraphile-rls-and-sql`,
+`graphql-contract-testing`) are held back unless you pass `--all` — a repo with
+no Kubernetes deploy should not carry Azure guidance.
+
+### What the installer guarantees
+
+These are the rules that make the install repeatable rather than a pile of
+`ln` commands, and each is covered by `tests/test_install.sh`:
+
+| Guarantee | Why |
+|---|---|
+| **Idempotent** — re-running changes nothing | Safe to run after every `git pull` |
+| **Stale copies replaced** — a real directory left by an older install is swapped for a symlink | Otherwise that one skill silently stops updating |
+| **Collision refusal** — aborts if a skill name is already shipped by an installed plugin | Prevents shadowing the maintained copy; see below |
+| **Bundled assets travel** — a skill's `scripts/` and `templates/` come along, executable | Skills stay self-contained wherever they land |
+| **No external tooling** — bash only, no `jq`/`yq`/`just` | Installs on a bare machine |
+
+Restart Claude Code after installing so it re-reads the skills directory.
+
+### Pick one install path
+
+This repo is also installable as a Claude Code plugin from its marketplace
+entry, and a plugin's `skills/` directory is auto-discovered — which is the same
+directory this script installs from. Using **both** gives you every skill twice.
+
+`install.sh` detects this: it recognises collisions coming from our own plugin,
+warns, and proceeds (a collision with any *other* plugin still aborts). But the
+duplication is real, so choose one:
+
+- **`install.sh`** — recommended. Symlinks track the repo, and you control
+  which skills reach a given project.
+- **Marketplace plugin** — `/plugin`. Simpler to install; updates follow plugin
+  releases rather than `git pull`.
+
+### Prerequisites
+
+`bash` and `git`. Nothing else — `just` is optional convenience, and the test
+suite is pure bash.
+
+## Why There Is No Profile System
+
+An earlier version of this repo gated skills per project to save context. That
+mechanism has been removed, for two reasons.
+
+**It targeted the wrong directory.** Activation symlinked skills into
+`<project>/.github/skills/`, which is GitHub Copilot's discovery convention.
+Claude Code reads `~/.claude/skills/` and `<project>/.claude/skills/`. Once
+Copilot support was dropped, the machinery had no consumer.
+
+**The context saving was a rounding error.** Claude Code loads only each skill's
+`name` and `description` up front and reads the body when the skill is actually
+invoked:
+
+| | tokens |
+|---|---|
+| All 19 descriptions (always loaded) | ~1,540 |
+| All 19 bodies (loaded on invocation) | ~20,850 |
+
+Gating skills saves roughly a thousand tokens, while the machinery cost ~2,600
+lines of scripts, profiles, hooks, and tests to maintain 1,600 lines of skills.
+
+**What actually costs context** is different from what the profile system was
+gating:
+
+- **MCP tool schemas**, which load in full. Claude Code already gates those
+  natively — per-project `.mcp.json` and `enabledPlugins` in
+  `.claude/settings.json`. Use those; this repo does not wrap them.
+- **Long design documents**, which are charged in full every time one is
+  opened. That is a real cost, and it is what the
+  [document lifecycle](#document-lifecycle) addresses — by shrinking the
+  artifact rather than by hiding it behind a profile.
+
+Skill *gating* was the wrong lever. Artifact *reduction* is the right one.
+
+## What Belongs in This Repo
+
+Installed plugins are the source of truth for the skills they ship. Vendoring a
+copy here only creates a stale fork that shadows the maintained one.
+
+**In scope — `skills/`:**
+
+- **House rules** — the engineering constitution, commit conventions, review
+  gates, deploy discipline (`engineering-constitution`,
+  `conventional-commits-and-releases`, `verification-gate-and-automation`, …).
+- **Stack-specific skills** — guidance tied to tooling we actually run
+  (`postgres-postgraphile-rls-and-sql`, `graphql-contract-testing`,
+  `zero-downtime-migrations`, `cloud-delivery-aks`).
+- **Repo automation** — `init-repo-CI`, `commit-history-rewrite`, `ship-it`.
+
+**Out of scope — install from the source instead:**
+
+| Source | Provides | Install |
+|--------|----------|---------|
+| [obra/superpowers](https://github.com/obra/superpowers) | Workflow methodology: brainstorming, writing/executing plans, TDD, systematic debugging, code review, worktrees, subagent-driven development | Claude Code marketplace — `/plugin` |
+| [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Production engineering skills (spec-driven-development, source-driven-development, context-engineering, browser-testing-with-devtools, …) and agent personas | `git clone` + copy into `.claude/skills/` |
+
+**Enforced, not just documented.** `scripts/plugin-skills.sh` lists every skill
+name shipped by an installed plugin. `install.sh` refuses to install a skill
+that reuses one of those names, and `tests/test_skills.sh` asserts the pool
+stays clean. Override with `ALLOW_PLUGIN_SKILL_COLLISION=1` only while migrating
+a name.
+
+If a plugin skill is *almost* right, do not fork it — add a narrowly scoped
+house skill that says what we do differently and cross-links the one it
+complements.
 
 ## Commands
 
-### Profiles
+A `Justfile` is provided for convenience. Import it from your project:
 
-| Command | Description |
-|---------|-------------|
-| `just claude-brainstorm` | Activate brainstorm profile |
-| `just claude-design` | Activate design profile |
-| `just claude-code` | Activate code profile |
-| `just claude-ship` | Activate ship profile |
-| `just claude-minimal` | Deactivate all |
-| `just claude-active-profile` | Show current profile |
-
-### Skills
-
-| Command | Description |
-|---------|-------------|
-| `just claude-list-skills` | All skills + profile associations |
-| `just claude-list-active-skills` | Currently active skills |
-| `just claude-add-skill <name>` | Add skill to current profile |
-| `just claude-rm-skill <name>` | Remove skill from current profile |
-
-### MCPs
-
-| Command | Description |
-|---------|-------------|
-| `just claude-list-mcps` | All available MCPs |
-| `just claude-list-active-mcps` | MCPs for this project |
-| `just claude-add-mcp <name>` | Add + install MCP |
-| `just claude-rm-mcp <name>` | Remove MCP |
-
-### LSPs
-
-| Command | Description |
-|---------|-------------|
-| `just claude-list-lsps` | All available LSPs |
-| `just claude-setup-lsp <name>` | Install an LSP server |
-
-### Docs & Archive
-
-| Command | Description |
-|---------|-------------|
-| `just claude-update-archive` | Find unconverted specs, generate prompt |
-| `just claude-rebuild-index` | Rebuild decision index |
-
-### Inventory
-
-| Command | Description |
-|---------|-------------|
-| `just claude-list` | All tools in the pool, marked active/inactive |
-| `just claude-list-type <type>` | Filter by type (skill, agent, mcp, plugin) |
-| `just claude-list-profile <profile>` | Tools belonging to a profile |
-
-### Setup
-
-| Command | Description |
-|---------|-------------|
-| `just claude-bootstrap` | One-time global discovery — populate the pool |
-| `just claude-init` | Per-project init: migrate local tools into the pool |
-| `just test` | Run the bash test suite |
-| `just claude-help` | Show all commands |
-
-## Constitution Skills
-
-The **engineering constitution** is a portable charter of engineering practice, decomposed into 16 individually-loadable skills. Each skill's `description` controls *when* it loads, so guidance reaches an agent exactly when the task calls for it — and stack-specific guidance (e.g. Kubernetes/Azure) stays dormant in projects that don't use that stack.
-
-- **12 Tier-1 skills** — universal building and operating discipline (design, decisions, commits, testing, code craft, UI/a11y, CI gates, observability, security, performance, resilience). Load in every project.
-- **4 Tier-2 skills** — stack mechanisms (`postgres-postgraphile-rls-and-sql`, `graphql-contract-testing`, `zero-downtime-migrations`, `cloud-delivery-aks`). Self-activate only when their tooling/topic is present.
-
-The full charter lives in `docs/engineering-constitution.md`; each skill links back to its articles.
-
-### Install
-
-```bash
-# One-time: clone the pool (if you haven't already)
-git clone https://github.com/lguidolin/agent-skills.git ~/local/agent-skills
-
-# Personal, all-projects: symlink all 16 into ~/.claude/skills/
-~/local/agent-skills/scripts/constitution-install.sh --global
-
-# Per-project, team-shared: copy the portable set into a repo's .claude/skills/ and commit it
-~/local/agent-skills/scripts/constitution-install.sh --project ~/path/to/repo
+```justfile
+import "~/local/agent-skills/Justfile"
 ```
 
-`--project` copies the 15 stack-portable skills and **excludes `cloud-delivery-aks`** (a project with no Kubernetes deploy shouldn't carry Azure guidance); pass `--all` to include it. The `--global` symlinks auto-update when you `git pull` the pool.
+| Command | Description |
+|---------|-------------|
+| `just claude-install-global` | Symlink all skills into `~/.claude/skills` |
+| `just claude-install-project` | Copy portable skills into `./.claude/skills` |
+| `just claude-install-project-all` | Same, including stack-specific skills |
+| `just claude-list-skills` | List the pool with trigger descriptions |
+| `just claude-plugin-skills` | Show plugin-owned names you must not reuse |
+| `just claude-update-archive` | Find unconverted specs/plans |
+| `just claude-rebuild-index` | Rebuild the decision index |
+| `just test` | Run the test suite |
+
+## Skills
+
+Run `just claude-list-skills` for the current list with trigger conditions.
+
+The **engineering constitution** is 12 always-on Tier-1 skills covering design,
+decisions, commits, tests, code craft, UI, verification, observability,
+security, performance, and deploy safety — plus 4 Tier-2 stack skills that
+self-activate only when the relevant tooling is present. See
+[docs/engineering-constitution.md](docs/engineering-constitution.md).
 
 ## Document Lifecycle
 
-Specs and plans written during brainstorming are human-friendly but token-expensive. After implementation and merge, they're converted to compact **decision records**:
+This is the one context-saving mechanism in the repo that earns its keep.
+
+Specs and plans are verbose *on purpose* — they are written for a human
+following the reasoning. That verbosity is charged to context every time Claude
+opens one. After the work merges, each spec is reduced to a **decision record**:
+~30-50 lines carrying only what is needed to move forward — the decisions and
+their *why*, interfaces, constraints, gotchas, rejected alternatives. The
+original moves to `archive/`, still readable by a human, costing nothing until
+someone deliberately opens it.
 
 ```
 docs/superpowers/
-├── specs/        → Active specs (human-friendly)
-├── plans/        → Active plans
-├── decisions/    → Compact LLM-optimized records (always visible)
-├── archive/      → Originals after conversion (.claudeignored)
-└── index.md      → Auto-generated master index
+  specs/      → in-flight specs (verbose, human-facing)
+  plans/      → in-flight plans
+  decisions/  → compact decision records (what Claude reads)
+  archive/    → originals, preserved after conversion
+  index.md    → generated from decision frontmatter
 ```
 
-### Decision Records
+The tooling ships **inside the `recording-decisions` skill**, not in this
+repo's `scripts/`, so it works in any project the skill is installed into:
 
-~30-50 lines with YAML frontmatter for indexing:
-
-```yaml
----
-title: Auth Flow
-date: 2026-04-28
-component: authentication
-status: implemented
-supersedes: null
-dependencies: [user-management, session-store]
----
+```
+recording-decisions/
+  scripts/doc-archive.sh      list specs lacking a decision record
+  scripts/index-rebuild.sh    regenerate index.md from frontmatter
+  templates/decision-record.md
 ```
 
-The master index (`index.md`) is auto-generated and always visible to Claude — giving it awareness of all past decisions without loading full documents.
+Both are dependency-free bash. `ship-it` locates them at ship time and falls
+back to doing the work by hand if the skill is not installed — no skill in this
+repo depends on this repo's Justfile.
 
-### Archival Flow
+From inside this repo you can also use `just claude-update-archive` and
+`just claude-rebuild-index`.
 
-Archival happens **post-merge only** (via the `ship-it` skill or `just claude-update-archive`):
+## Adding a Skill
 
-1. Identify unconverted specs/plans
-2. Convert to decision records (Claude does this in-session)
-3. Move originals to `archive/`
-4. Rebuild the master index
-
-## Hooks
-
-Optional Claude Code hooks for automation:
-
-- **Pre-session**: Validates profile state, cleans stale locks, warns about broken symlinks
-- **Post-session**: Optionally reverts to minimal profile (configurable per profile)
-
-Install hooks by pointing Claude Code's hook configuration to the `hooks/` directory.
-
-## Adding Skills / MCPs / LSPs
-
-### New Skill
-
-Add a `SKILL.md` to `skills-available/<name>/` with YAML frontmatter:
+Add a `SKILL.md` to `skills/<name>/` with YAML frontmatter:
 
 ```yaml
 ---
@@ -231,45 +227,22 @@ description: Use when [trigger conditions]
 ---
 ```
 
-Then add it to relevant profiles in `profiles/*.yml`.
+A skill may bundle its own assets — put them in `skills/<name>/scripts/` and
+`skills/<name>/templates/` and reference them by a path relative to `SKILL.md`.
+Both install modes carry them along with the executable bit intact, which is how
+a skill stays self-contained in whatever repo it lands in. Never reference this
+repo's `Justfile` from a skill: it will not exist where the skill is installed.
 
-### New MCP
+The tests enforce that `name` matches the directory, that `description` states
+trigger conditions, and that the name does not collide with a plugin-owned one.
+Check what is taken before you start:
 
-Create `mcps-available/<name>.yml`:
-
-```yaml
-name: my-mcp
-description: "What it does"
-install: "claude mcp add my-mcp -- npx -y @scope/package"
-remove: "claude mcp remove my-mcp"
-profiles: [code, design]
-languages: [typescript]
+```bash
+just claude-plugin-skills
 ```
 
-### New LSP
-
-Create `lsps/<name>.yml`:
-
-```yaml
-name: my-lsp
-description: "Language intelligence for X"
-install: "npm install -g my-lsp-server"
-detect: ["indicator-file.json"]
-```
-
-## Prerequisites
-
-- [just](https://github.com/casey/just) — command runner
-- [yq](https://github.com/mikefarah/yq) — YAML processor
-- [gh](https://cli.github.com/) — GitHub CLI (for PR creation in ship profile)
-- [claude](https://docs.anthropic.com/en/docs/claude-code) — Claude Code CLI
-
-## Concurrency
-
-- Different projects: no conflicts (each has its own `.github/skills/` and lock)
-- Same project, different modes: use [git worktrees](https://git-scm.com/docs/git-worktree)
-- Accidental conflicts: lock file prevents concurrent profile switches
+Then run `just test`.
 
 ## License
 
-GPL-3.0
+GPL-3.0 — see [LICENSE](LICENSE).

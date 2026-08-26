@@ -48,6 +48,29 @@ type(scope): lowercase description
 
 The PR template will guide you through the required sections.
 
+## Testing
+
+```bash
+just test          # or: tests/run.sh
+```
+
+Two suites, both pure bash — no `jq`/`yq` needed:
+
+- **`test_skills.sh`** lints the pool: every skill has a `SKILL.md` with closed
+  frontmatter, `name` matching its directory, and a `description` that states
+  trigger conditions. It also asserts no skill reuses a name shipped by an
+  installed plugin.
+- **`test_install.sh`** exercises `scripts/install.sh` against an isolated
+  `HOME`: global symlinking, idempotency, replacing stale real directories left
+  by older installs, project copying, stack-specific exclusion, and the
+  plugin-collision refusal. It also verifies that a skill's bundled
+  `scripts/`/`templates/` survive both install modes with the executable bit
+  intact, that the bundled scripts run from the installed location, and that
+  they stay free of `yq`/`jq`/`just` dependencies.
+
+Add a skill → `test_skills.sh` covers it automatically. There is nothing to
+register.
+
 ## Automated Checks
 
 | Check | Status | Effect |

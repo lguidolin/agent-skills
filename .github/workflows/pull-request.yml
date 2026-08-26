@@ -63,6 +63,14 @@ jobs:
               }
             }
 
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run tests
+        run: tests/run.sh
+
   ci-checks:
     name: CI Checks
     runs-on: ubuntu-latest

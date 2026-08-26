@@ -1,6 +1,0 @@
-name: postgres
-description: "Query and manage PostgreSQL databases"
-install: "claude mcp add postgres -- npx -y @anthropic/mcp-postgres"
-remove: "claude mcp remove postgres"
-profiles: [code]
-languages: [typescript, python]

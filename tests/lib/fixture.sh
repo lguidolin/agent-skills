@@ -1,23 +1,15 @@
 # tests/lib/fixture.sh
 # Source from each test. Provides setup_fixture / teardown_fixture.
+#
+# Gives the test an isolated HOME so an install can be exercised without
+# touching the developer's real ~/.claude/skills.
 
 setup_fixture() {
   : "${REPO_ROOT:?setup_fixture requires REPO_ROOT to be set}"
   TEST_HOME=$(mktemp -d -t agent-skills-test.XXXXXX)
   export TEST_HOME
   export HOME="$TEST_HOME"
-  export AGENT_SKILLS_DIR="$TEST_HOME/agent-skills"
-  mkdir -p \
-    "$AGENT_SKILLS_DIR/skills-available" \
-    "$AGENT_SKILLS_DIR/agents-available" \
-    "$AGENT_SKILLS_DIR/mcps-available" \
-    "$AGENT_SKILLS_DIR/plugins-available" \
-    "$AGENT_SKILLS_DIR/profiles" \
-    "$AGENT_SKILLS_DIR/scripts" \
-    "$TEST_HOME/.claude/plugins/cache" \
-    "$TEST_HOME/.claude/skills"
-  # Copy real scripts into the fixture so paths resolve consistently.
-  cp -r "$REPO_ROOT/scripts/." "$AGENT_SKILLS_DIR/scripts/"
+  mkdir -p "$TEST_HOME/.claude/plugins/cache"
 }
 
 teardown_fixture() {
@@ -25,5 +17,3 @@ teardown_fixture() {
     rm -rf "$TEST_HOME"
   fi
 }
-
-# Convenience: $REPO_ROOT is the actual repo root, set by the test runner.
