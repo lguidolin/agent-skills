@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0](https://github.com/lguidolin/agent-skills/compare/v0.6.0...v0.7.0) (2026-08-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* .github/skills/ is no longer a skill pool in this repo. Install superpowers via the Claude Code marketplace and addyosmani/agent-skills from its own repo. skill-add.sh now reads skills-available/, and the /setup-repo command invokes init-repo-CI (was repo-automation-setup).
+
+### Code Refactoring
+
+* make plugins the source of truth and drop the profile system ([#16](https://github.com/lguidolin/agent-skills/issues/16)) ([a4b6d9e](https://github.com/lguidolin/agent-skills/commit/a4b6d9eb15de2a713ea73729ee4e8d25ecc58b38))
+
 ## [0.6.0](https://github.com/lguidolin/agent-skills/compare/v0.5.0...v0.6.0) (2026-06-13)
 
 
