@@ -7,7 +7,7 @@ description: Use when starting work in a project that follows the engineering co
 
 ## Overview
 
-A portable charter of engineering practice, decomposed into focused skills. This skill is the **index**: it states the inviolable principles and routes you to the specific skill for your task. The full reasoning lives in `docs/engineering-constitution.md` (in this repo and in `agent-skills/docs/`).
+A portable charter of engineering practice, decomposed into focused skills. This skill is the **index**: it states the inviolable principles and routes you to the specific skill for your task. The full reasoning lives in `references/engineering-constitution.md`, bundled alongside this SKILL.md so it travels with the skill wherever it is installed.
 
 **Core idea:** *Software engineering is programming integrated over time.* Optimize for the long-lived system — operating it, changing it safely, recovering when it breaks — not the first deploy.
 
@@ -15,7 +15,7 @@ A portable charter of engineering practice, decomposed into focused skills. This
 
 1. **Understand before building.** No code before an approved design.
 2. **Record every decision with its rationale — and what you rejected.**
-3. **Tests are a control, not a formality.** A failing test is information, never edited away.
+3. **Tests are a control, not a formality — and behavioral change is test-first.** A failing test is information, never edited away. Structural change is gated instead by the existing suite passing unedited.
 4. **YAGNI, ruthlessly.**
 5. **Automate the repeatable.**
 6. **Software engineering is programming integrated over time.**
@@ -34,7 +34,7 @@ A portable charter of engineering practice, decomposed into focused skills. This
 | Writing/changing tests; permission/role rules; a test broke in a refactor | `tests-as-a-control` |
 | Writing or refactoring code; structuring a change; DRY decisions | `change-hygiene-and-code-craft` |
 | Building UI, components, styling, accessibility | `interface-craft-and-accessibility` |
-| CI, pre-push hooks, task runners, merge gates | `verification-gate-and-automation` |
+| CI, pre-push hooks, task runners, merge gates | `merge-gates-and-automation` |
 | Logging, metrics, tracing, health checks, SLOs, alerts | `observability-and-slos` |
 | Untrusted input, secrets, auth, dependencies, threat modeling | `defense-in-depth-security` |
 | Hot paths, pagination, N+1, list endpoints, public interfaces | `performance-and-scale` |
