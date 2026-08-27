@@ -120,7 +120,21 @@ install_global() {
     ln -sfn "$POOL/$skill" "$dest/$skill"
     n=$((n + 1))
   done
-  echo "  linked $n skill(s)${replaced:+, replaced $replaced stale copy/copies}."
+  # A skill renamed or removed upstream leaves its old symlink behind, pointing
+  # at a path that no longer exists. Claude Code would list a skill it cannot
+  # load, so prune links that resolve into this pool but no longer have a skill.
+  local pruned=0
+  for link in "$dest"/*; do
+    [[ -L "$link" ]] || continue
+    target="$(readlink "$link")"
+    [[ "$target" == "$POOL/"* ]] || continue   # not ours; leave alone
+    [[ -f "$target/SKILL.md" ]] && continue    # still valid
+    rm -f "$link"
+    echo "  pruned $(basename "$link") (no longer in the pool)"
+    pruned=$((pruned + 1))
+  done
+
+  echo "  linked $n skill(s)${replaced:+, replaced $replaced stale copy/copies}${pruned:+, pruned $pruned stale link(s)}."
   echo "  They update automatically when you 'git pull' this repo."
 }
 
