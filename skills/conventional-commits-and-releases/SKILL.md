@@ -49,6 +49,19 @@ Commit messages are a **machine-read interface**, not just prose. Automated vers
 - A squash PR title that isn't a valid conventional commit
 - Any AI attribution or `Co-authored-by` line
 
-**Enforcement:** commitlint in CI (blocking) on messages and squash PR titles.
+**Enforcement:**
 
-Full rationale: `docs/engineering-constitution.md` Article III.
+- **PR title** — validated in CI, blocking (`amannn/action-semantic-pull-request`).
+  On squash-merge the title *is* the commit that ships, so this is the gate that matters.
+- **AI attribution** — a blocking `No AI Attribution` job rejects `Co-authored-by`
+  trailers naming Claude/Anthropic and `Generated with [Claude…]` footers, in both
+  the branch commits and the PR body (the body becomes the squash commit body).
+  Human `Co-authored-by` trailers are unaffected.
+- **Branch commit bodies** — deliberately unlinted. Squash-merge discards them, so
+  they never reach the changelog. If you move to merge commits, add commitlint.
+
+**Known gap:** if a commit is *authored* by an agent account, GitHub composes a
+`Co-authored-by` trailer at squash time — after the PR check has run. The gate
+above cannot see it. Don't commit as an agent identity.
+
+Full rationale: Article III of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

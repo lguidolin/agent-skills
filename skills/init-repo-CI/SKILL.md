@@ -174,6 +174,34 @@ jobs:
               }
             }
 
+  no-ai-attribution:
+    name: No AI Attribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Scan commit messages and PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Trailer/footer forms only: a commit that merely mentions Claude or
+          # Anthropic in prose is fine. Human Co-authored-by trailers are fine.
+          PAT='^[[:space:]]*Co-authored-by:.*(Claude|Anthropic|noreply@anthropic)|Generated with \[?(Claude|Anthropic)'
+          fail=0
+          if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | grep -Eiq "$PAT"; then
+            echo "::error::AI attribution found in a commit message on this branch"
+            fail=1
+          fi
+          if printf '%s' "$PR_BODY" | grep -Eiq "$PAT"; then
+            echo "::error::AI attribution found in the PR description"
+            fail=1
+          fi
+          [ "$fail" -eq 0 ] && echo "No AI attribution found."
+          exit $fail
+
   ci-checks:
     name: CI Checks
     runs-on: ubuntu-latest
@@ -188,6 +216,10 @@ jobs:
             yamllint -d "{extends: default, rules: {line-length: disable}}" "$file" || true
           done
 ```
+
+**`No AI Attribution` ships blocking from day one** — it has no false-positive
+surface to validate (it matches trailer and footer forms, not prose), so it does
+not go through the graduation path below.
 
 **CI check graduation path:**
 1. Deploy with `continue-on-error: true` (informational, non-blocking)

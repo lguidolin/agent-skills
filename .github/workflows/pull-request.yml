@@ -63,6 +63,37 @@ jobs:
               }
             }
 
+  no-ai-attribution:
+    name: No AI Attribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Scan commit messages and PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Anchored to trailer/footer forms only. A commit that merely mentions
+          # Claude or Anthropic in its subject or body is fine — this repo is
+          # about Claude Code. Human Co-authored-by trailers are fine too; only
+          # AI attribution is rejected.
+          PAT='^[[:space:]]*Co-authored-by:.*(Claude|Anthropic|noreply@anthropic)|Generated with \[?(Claude|Anthropic)'
+          fail=0
+          if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | grep -Eiq "$PAT"; then
+            echo "::error::AI attribution found in a commit message on this branch"
+            git log --format='%h %B' "$BASE_SHA..$HEAD_SHA" | grep -Ein "$PAT" || true
+            fail=1
+          fi
+          if printf '%s' "$PR_BODY" | grep -Eiq "$PAT"; then
+            echo "::error::AI attribution found in the PR description (it becomes the squash commit body)"
+            fail=1
+          fi
+          [ "$fail" -eq 0 ] && echo "No AI attribution found."
+          exit $fail
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest
