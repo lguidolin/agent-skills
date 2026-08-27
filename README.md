@@ -126,7 +126,7 @@ copy here only creates a stale fork that shadows the maintained one.
 
 - **House rules** — the engineering constitution, commit conventions, review
   gates, deploy discipline (`engineering-constitution`,
-  `conventional-commits-and-releases`, `verification-gate-and-automation`, …).
+  `conventional-commits-and-releases`, `merge-gates-and-automation`, …).
 - **Stack-specific skills** — guidance tied to tooling we actually run
   (`postgres-postgraphile-rls-and-sql`, `graphql-contract-testing`,
   `zero-downtime-migrations`, `cloud-delivery-aks`).
@@ -176,7 +176,7 @@ The **engineering constitution** is 12 always-on Tier-1 skills covering design,
 decisions, commits, tests, code craft, UI, verification, observability,
 security, performance, and deploy safety — plus 4 Tier-2 stack skills that
 self-activate only when the relevant tooling is present. See
-[docs/engineering-constitution.md](docs/engineering-constitution.md).
+[the engineering constitution](skills/engineering-constitution/references/engineering-constitution.md).
 
 ## Document Lifecycle
 

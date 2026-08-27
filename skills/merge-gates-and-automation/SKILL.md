@@ -1,5 +1,5 @@
 ---
-name: verification-gate-and-automation
+name: merge-gates-and-automation
 description: Use when setting up or changing CI, pre-push hooks, or a task runner, or deciding what must pass before merge. Symptoms — tempted to put authoritative checks only in a local hook, skip CI, bypass with --no-verify, or unsure what gates a merge vs. runs locally.
 ---
 
@@ -37,4 +37,4 @@ A bypassable local presubmit is *fast but unenforceable*; authoritative CI is *e
 - A merge allowed while CI is red
 - A locally-built image with no SHA tag or pinned digests
 
-Full rationale: `docs/engineering-constitution.md` Article VIII. Deploy/k8s specifics: `cloud-delivery-aks`.
+Full rationale: Article VIII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`. Deploy/k8s specifics: `cloud-delivery-aks`.

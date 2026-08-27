@@ -31,4 +31,4 @@ You cannot operate, debug, or improve what you cannot see. Observability is desi
 
 A pre-launch/local project implements structured logs + health endpoints now and defers SLOs/alerting until there are real users to protect. State the mode in the first decision record.
 
-Full rationale: `docs/engineering-constitution.md` Articles IX & XVI.
+Full rationale: Articles IX & XVI of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

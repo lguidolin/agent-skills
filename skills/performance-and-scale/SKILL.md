@@ -29,4 +29,4 @@ Performance is a feature with a budget. Measure it, bound it, and respect that t
 
 **Enforcement:** budgets checked in CI where mechanizable (bundle-size limits, query-cost limits); pagination and N+1 avoidance are reviewer judgment backed by load testing and query-plan review.
 
-Full rationale: `docs/engineering-constitution.md` Article XI.
+Full rationale: Article XI of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

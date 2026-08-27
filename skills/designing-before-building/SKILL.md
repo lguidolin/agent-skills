@@ -44,4 +44,4 @@ Genuinely trivial, reversible edits (a typo, a log line, a config value) skip st
 
 **All of these mean: stop, design, get approval, then build.**
 
-Full rationale: `docs/engineering-constitution.md` Article I.
+Full rationale: Article I of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

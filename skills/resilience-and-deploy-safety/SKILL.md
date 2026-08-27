@@ -38,4 +38,4 @@ Things will break. The stance is not "prevent all failure" but **fail small, rec
 
 Local/pre-launch projects write these rules now, activate on first real users. Stack mechanisms (k8s probes, canary, per-PR envs): `cloud-delivery-aks`.
 
-Full rationale: `docs/engineering-constitution.md` Article XII.
+Full rationale: Article XII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

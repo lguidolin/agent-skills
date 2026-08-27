@@ -30,4 +30,4 @@ Tests that sit *on the seam between layers* and break when either side moves wit
 
 **Enforcement:** `graphql-codegen` + `tsc` in CI (blocking) for the compile-time half; runtime contract + route smoke tests in CI against a seeded DB.
 
-Full rationale: `docs/engineering-constitution.md` Article XV.
+Full rationale: Article XV of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

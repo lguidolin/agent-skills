@@ -45,4 +45,4 @@ The data-layer mechanism for this stack. Implements **defense in depth** (RLS as
 | New GraphQL surface | Depth/cost limit and pagination cap? |
 | New object | Own file, dependency-ordered include, inline `COMMENT ON`? |
 
-Full rationale: `docs/engineering-constitution.md` Articles XIII, XIV, XVIII. Migrations: `zero-downtime-migrations`. Contract tests: `graphql-contract-testing`.
+Full rationale: Articles XIII, XIV, XVIII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`. Migrations: `zero-downtime-migrations`. Contract tests: `graphql-contract-testing`.
