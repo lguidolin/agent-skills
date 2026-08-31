@@ -45,4 +45,4 @@ Checkable rules:
 
 **Enforcement:** a11y linting/tests in CI (e.g. `eslint-plugin-jsx-a11y`, axe) for the checkable rules; aesthetic restraint is reviewer judgment via the escalation rule.
 
-Full rationale: `docs/engineering-constitution.md` Article VII.
+Full rationale: Article VII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

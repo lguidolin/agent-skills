@@ -45,4 +45,4 @@ How changes are shaped and how code is written. Two themes: **separate structura
 - Abstracting on the first sight of similarity, or on anticipated (not actual) repetition
 - A file you can no longer hold in your head
 
-Full rationale: `docs/engineering-constitution.md` Articles V & VI.
+Full rationale: Articles V & VI of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

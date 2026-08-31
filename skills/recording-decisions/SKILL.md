@@ -32,6 +32,7 @@ Every non-trivial decision produces a record with a fixed structure, so any read
 ## Quick Reference
 
 - Record location convention: `docs/superpowers/decisions/YYYY-MM-DD-<topic>.md` with YAML frontmatter (`title`, `date`, `component`, `status`, `supersedes`, `dependencies`).
+- Future Considerations lives at `docs/superpowers/future-considerations.md`. Each entry carries a **status** (`open` / `triggered` / `done` / `dropped`) and, where it applies, the **trigger** that should reactivate it. Consult it when starting new work.
 - Frontmatter feeds the auto-generated index — keep it accurate.
 - The *why* and the *rejected alternatives* are the two highest-value sections. A record without them is a landmine.
 - Write the record at the **Record** stage of the pipeline (see `designing-before-building`), after Execute.
@@ -83,4 +84,4 @@ and costs nothing until deliberately opened.
 
 Trivial, self-evident changes don't need a record. The test: *would someone later ask "why was this done this way?"* If yes, record it.
 
-Full rationale: `docs/engineering-constitution.md` Article II.
+Full rationale: Article II of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

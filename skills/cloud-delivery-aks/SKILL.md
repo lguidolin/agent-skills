@@ -12,7 +12,7 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 ## Delivery Rules
 
 - **Local dev runs the full stack** via Docker Compose, one command, comprehensive — a first-class requirement.
-- **Images build locally → GHCR, tagged by commit SHA** (the deliberate CI exception from `verification-gate-and-automation`), then **promoted unchanged** dev → alpha → prod. Never rebuilt per environment.
+- **Images build locally → GHCR, tagged by commit SHA** (the deliberate CI exception from `merge-gates-and-automation`), then **promoted unchanged** dev → alpha → prod. Never rebuilt per environment.
 - **Per-PR ephemeral alpha environments.** Each PR deploys to its own isolated namespace on AKS for review, **torn down on merge/close.** The integration-test bed; cheap to create and destroy.
 - **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to the endpoints in `observability-and-slos`), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use an **HPA** for load.
 - **Progressive delivery to prod.** Canary or blue-green via Argo Rollouts / Flagger with automated metric analysis tied to SLOs; a failed canary **aborts automatically.**
@@ -34,4 +34,4 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 
 **Why this is quarantined:** all Azure/k8s specifics live here behind a stack-specific trigger. A local-only or different-cloud project substitutes its own delivery skill; the *principles* (immutable artifact, reversible + progressive deploy, decoupled migrations) come from `resilience-and-deploy-safety`.
 
-Full rationale: `docs/engineering-constitution.md` Article XIX.
+Full rationale: Article XIX of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

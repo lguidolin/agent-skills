@@ -39,4 +39,4 @@ A schema change is split across **three releases**, never one:
 
 That rule is *developer ergonomics* and is correct in dev. In production with live users and a rolling deploy, both app versions share the schema for the rollout's duration — so expand/contract is what makes the change safe. Don't conflate the two.
 
-Full rationale: `docs/engineering-constitution.md` Article XVII. Deploy pipeline: `cloud-delivery-aks`.
+Full rationale: Article XVII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`. Deploy pipeline: `cloud-delivery-aks`.

@@ -27,9 +27,45 @@ Handle the complete shipping lifecycle: stage, commit, push, open a PR, archive 
 - User explicitly wants to push directly to main (confirm this is intentional first)
 - Repo has no remote configured
 - Changes are work-in-progress the user isn't ready to push yet
-- User just wants to commit without shipping (use git-workflow-and-versioning)
+- User just wants to commit without shipping (use `conventional-commits-and-releases`)
 
 ## Process
+
+### Phase 0: Verify and Detect
+
+**A red suite never becomes a PR.** Run the project's full test suite first. If
+anything fails, report the failures and stop — do not commit, push, or open a
+PR. This gate is house policy and is not delegated.
+
+Environment detection (normal repo vs. named-branch worktree vs. detached HEAD)
+and base-branch determination are **delegated to
+`superpowers:finishing-a-development-branch`**, which already handles all three
+cases.
+
+**Check availability the right way: look for `finishing-a-development-branch` in
+your own list of available skills.** If it is listed, it is invocable. If it is
+not listed, it is not — proceed to the fallback.
+
+> Do **not** probe the filesystem for it. `~/.claude/plugins/cache/` holds every
+> version ever fetched, including plugins that are installed but **disabled**,
+> and skills can be provided by mechanisms other than the plugin cache. A path
+> existing under the cache proves nothing about whether you can invoke the skill.
+
+**If available** — invoke it for test verification, environment detection, and
+base-branch determination, then **stop before its option menu**.
+
+> The integration decision is already made by house rule and is not the user's
+> to re-make here: **this project merges only through a PR**, because the PR is
+> what produces the preview deployment and what CI gates. Its *"merge back to
+> `<base>` locally"* option is unavailable. Its *"keep the branch as-is"* option
+> remains valid — that is a decision to defer, not to bypass the gate.
+
+**If missing** — fall back, and lose nothing that gates correctness:
+
+- Run the test suite directly.
+- Treat the branch's upstream, or `main`, as the base; confirm with the user
+  before proceeding.
+- Skip worktree cleanup in Phase 6; delete the branch normally.
 
 ### Phase 1: Stage & Commit
 
@@ -196,9 +232,18 @@ git branch --show-current
 git log --oneline -3
 ```
 
+**If the work happened in a git worktree**, delegate the teardown to
+`superpowers:finishing-a-development-branch` (its provenance-based cleanup —
+it knows which worktrees it owns and leaves externally-managed ones in place).
+If that skill is unavailable, remove the worktree manually with
+`git worktree remove <path>` and confirm with the user first.
+
 ## Key Principles
 
-- **Never push to main directly** — always branch + PR
+- **A red suite never becomes a PR** — verify before anything else (Phase 0)
+- **Never push to main directly** — always branch + PR. The PR *is* the preview
+  deployment and the CI gate; a local merge skips both. This overrides any
+  workflow that offers merging locally as a choice.
 - **Conventional commits** — the PR title is the changelog entry
 - **Archive after merge only** — specs stay accessible during review
 - **Decision records are compact** — ~30-50 lines, YAML-indexed, LLM-optimized

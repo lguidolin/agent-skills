@@ -34,4 +34,4 @@ RLS as the final enforcement layer, GraphQL depth/cost limiting as a DoS control
 
 **Enforcement:** dependency audit + image scanning + secret-scanning in CI (blocking); threat models and audit coverage are reviewer judgment.
 
-Full rationale: `docs/engineering-constitution.md` Articles X & XIV.
+Full rationale: Articles X & XIV of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.

@@ -41,4 +41,17 @@ See "What Belongs in This Repo" in README.md.
   both refuse a collision
 - YAML frontmatter with `name` and `description` fields
 - Description starts with trigger conditions ("Use when...")
-- Every skill has: Overview, When to Use, When NOT to Use, Process
+- Skills come in two archetypes, and the required sections differ:
+  - **Rule skills** (the constitution and its discipline skills) state standing
+    rules. Required: `Overview`, the rules themselves, and a
+    `Full rationale:` footer citing the constitution article. Most also carry
+    `Common Rationalizations` and `Red Flags` — the two sections that do the
+    real work of holding a rule under pressure. They have no `Process`, because
+    there is no procedure to run.
+  - **Procedural skills** (`ship-it`, `init-repo-CI`, `commit-history-rewrite`)
+    walk through an ordered task. Required: `Overview`, `When to Use`,
+    `When NOT to Use`, `Process`.
+- The constitution text is bundled at
+  `skills/engineering-constitution/references/engineering-constitution.md` so it
+  travels with the skill. Never cite it by a `docs/` path from inside a skill —
+  that path resolves against whatever project is open, not this repo.
