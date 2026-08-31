@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.0](https://github.com/lguidolin/agent-skills/compare/v0.7.0...v0.8.0) (2026-08-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* the skill `verification-gate-and-automation` is now named `merge-gates-and-automation`. Re-run scripts/install.sh to pick up the new name; it prunes the stale symlink.
+
+### Features
+
+* align house skills with superpowers workflows ([#18](https://github.com/lguidolin/agent-skills/issues/18)) ([e4a98d5](https://github.com/lguidolin/agent-skills/commit/e4a98d53bee95b673cd24ccd7ae96a21c3577534))
+
 ## [0.7.0](https://github.com/lguidolin/agent-skills/compare/v0.6.0...v0.7.0) (2026-08-26)
 
 
