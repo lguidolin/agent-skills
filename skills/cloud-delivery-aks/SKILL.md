@@ -29,12 +29,12 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 | staging | merge to main | persistent ns `staging` | **retag** of the preview digest as `sha-<merge>` |
 | production | release published + approval | ns `production` | digest of the release commit's **parent** |
 
-**Why the parent commit.** release-please's release commit changes `CHANGELOG.md` and the manifest, so its tree matches no image ever built. Its parent is the last feature merge — exactly what staging has been soaking. Deriving the digest from git rather than from live cluster state keeps promotion reproducible.
+**Why the parent commit.** release-please's release commit changes only `CHANGELOG.md` and the manifest, so its tree is never one that staging soaked — whatever preview built for the release PR itself was never promoted past preview. Its parent is the last feature merge, which is exactly what staging has been validating, so long as release-please keeps its release branch on main's tip (its default behaviour). Deriving the digest from git rather than from live cluster state keeps promotion reproducible.
 
 **Retag safety.** Squash-merge produces a different commit SHA and, if main moved while the PR was open, a different *tree*. Two guards:
 
 - Require **"branches up to date before merging"** — a ruleset flag separate from required checks — so the squash tree equals the PR head tree by construction.
-- Verify rather than assume: compare `git rev-parse <merge>^{tree}` against the PR head tree. Equal → retag. Unequal → rebuild at the merge SHA.
+- Verify rather than assume: compare `git rev-parse <merge>^{tree}` against the PR head tree. Equal → retag. Unequal → rebuild at the merge SHA. That is not the per-environment rebuild the Delivery Rules forbid: an unequal tree means the content itself differs from what preview validated, so there is no promotable artifact to reuse — and the rebuilt image enters staging as a fresh candidate rather than a promotion.
 
 The retag is a pointer operation — no rebuild, no pull:
 
