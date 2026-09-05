@@ -92,4 +92,15 @@ CONST="$POOL/engineering-constitution/references/engineering-constitution.md"
 assert_file_contains "$CONST" "Container images build in CI"
 assert_file_contains "$CONST" "Enforcement mode is declared, never assumed"
 
+assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "advisory"
+assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "enforced"
+
+# The Article VIII local-build exception is retired everywhere: images build in CI.
+local_build=$(grep -rln 'build locally' "$POOL" --include='*.md' || true)
+if [[ -z "$local_build" ]]; then
+  _pass
+else
+  _fail "skills still describe local image builds" "$(echo "$local_build" | tr '\n' ' ')"
+fi
+
 report_results
