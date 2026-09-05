@@ -151,7 +151,7 @@ The standard is **accessible, minimalist, and beautiful — by construction, not
 ## Article VIII — Automation & the Verification Gate
 
 - **One task runner is the canonical entry to every everyday operation.** Running tests, building, starting local dev, deploying — each is a named recipe. The recipe is the source of truth; a procedure that exists only in someone's head does not reliably happen and cannot be handed to an agent.
-- **CI is the source of truth — authoritative, shared, unbypassable.** It is the wall: lint, typecheck, the contract checks (Article XV), the test suite, security scans, and commit validation all run here and **must pass before merge**. What CI says is what counts.
+- **CI is the source of truth — authoritative, shared, and unbypassable wherever the platform allows it.** It is the wall: lint, typecheck, the contract checks (Article XV), the test suite, security scans, and commit validation all run here and **must pass before merge** in `enforced` mode. What CI says is what counts. Where branch protection is unavailable the project declares `advisory` mode (below): the same checks run and report, and the wall is discipline rather than machinery. The checks never shrink; only their enforceability differs.
 - **The pre-push hook is a presubmit mirror, not a wall.** It runs the same fast checks locally so you *probably* pass CI before you push — saving a round-trip. It is explicitly **bypassable** (`--no-verify`) and only runs where the toolchain is installed. We accept that; its job is speed and early feedback, not enforcement. CI re-runs everything regardless. **The hook never gates; CI gates.**
 - **Keep CI fast by tiering, not by removing checks.** While the full suite is fast, run it all on every PR. When it outgrows that, split **presubmit** (fast subset, blocks the PR) from **postsubmit** (full suite, runs after merge, blocks promotion) — never move authoritative checks back to the bypassable hook.
 - **Container images build in CI, never on a developer machine.** The shipped artifact's provenance is a hermetic runner, which is what makes build attestation meaningful. Two conditions keep this honest and affordable: **registry layer caching** (`cache-to`/`cache-from`, or a self-hosted runner) so build latency never pushes anyone back to a laptop build, and a **published provenance attestation** for every image. Images are identified by **content digest**; tags are mutable pointers and are never the unit of promotion.
@@ -363,14 +363,14 @@ A schema change that an app version depends on is split across **three releases*
 - **A persistent staging tier receives every merge to main**, so staging always reflects main's tip and cannot drift from it. Production promotes the digest staging validated, after a human decision.
 - **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to Article XVI endpoints), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use a **HorizontalPodAutoscaler** for load.
 - **Progressive delivery to prod.** Canary or blue-green via the platform (e.g. Argo Rollouts / Flagger) with automated metric analysis tied to SLOs (Article IX); a failed canary aborts automatically.
-- **Rollback is first-class and rehearsed.** Because images are immutable and SHA-tagged, rollback is redeploying the prior tag (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
+- **Rollback is first-class and rehearsed.** Because images are immutable and addressed by digest, rollback is redeploying the previously-good digest (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
 - **Migrations are a separate, ordered step** in the pipeline, expand-safe (Article XVII), run before the code that depends on them — never bundled into the pod that needs the new schema.
 - **CI is the gate (Article VIII):** lint, typecheck, contract checks, tests, and security scans block merge. CI also **builds the image and publishes its provenance attestation**.
 - **Dev/prod parity & config from the environment.** Secrets from Key Vault (Article XIV); ports/config from env; dev-only tooling (pgTAP, test runners) never ships in production images.
 
-> **Why.** Immutable SHA-tagged artifacts plus health-gated progressive rollout plus a rehearsed rollback turn "deploy" from a held-breath event into a routine, reversible, low-blast-radius operation — which is the whole point of Article XII.
+> **Why.** Immutable, digest-addressed artifacts plus health-gated progressive rollout plus a rehearsed rollback turn "deploy" from a held-breath event into a routine, reversible, low-blast-radius operation — which is the whole point of Article XII.
 
-**Enforcement:** the CI/CD pipeline and Kubernetes manifests are the enforcement (probes, PDB, rollout strategy, promotion flow defined as code); branch protection requires CI green before merge.
+**Enforcement:** the CI/CD pipeline and Kubernetes manifests are the enforcement (probes, PDB, rollout strategy, promotion flow defined as code); in `enforced` mode branch protection requires CI green before merge, and in `advisory` mode that requirement is carried by the declared discipline instead.
 
 ---
 

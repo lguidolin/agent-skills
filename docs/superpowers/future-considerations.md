@@ -19,6 +19,7 @@ starting new work so nothing is silently forgotten. See the
 - **Raised:** 2026-08-27
 - **Trigger:** next substantive change to the deploy path, or the next release
   that needs a staging soak.
+- **Resolved:** 2026-09-04 by the deployment cycle design; see the decision record. Layer 3 (the launchpad cycle skill) and the template remediation below remain.
 
 The intended pipeline is **PR → preview deployment → merge → staging →
 approval → production**. Today this is undocumented in any skill:
@@ -43,7 +44,6 @@ or await an infra action, and the two repos' pipelines need a defined contract
 
 **Do not** start this before the current skills-integration work is merged —
 they touch `ship-it` and `resilience-and-deploy-safety` in overlapping places.
-- **Resolved:** 2026-09-04 by the deployment cycle design; see the decision record. Layer 3 (the launchpad cycle skill) and the template remediation below remain.
 
 ---
 

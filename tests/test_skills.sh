@@ -81,7 +81,7 @@ fi
 # Tier names are preview → staging → production. "Alpha" was ambiguous — a
 # persistent tier in Article XIX, an ephemeral per-PR namespace in the
 # launchpad templates — and is retired.
-stale_alpha=$(grep -rln '\balpha\b' "$POOL" --include='*.md' || true)
+stale_alpha=$(grep -rlin '\balpha\b' "$POOL" || true)
 if [[ -z "$stale_alpha" ]]; then
   _pass
 else
@@ -95,6 +95,10 @@ assert_file_contains "$CONST" "Enforcement mode is declared, never assumed"
 assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "advisory"
 assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "Declare the enforcement mode"
 
+# NOTE: `merge-gates-and-automation` deliberately contains the phrase "build the
+# image locally" in a Common Rationalizations row. That does NOT match the fixed
+# string below. If you ever reword that row to "build locally", this check fails
+# on the repo's own text.
 # The Article VIII local-build exception is retired everywhere: images build in CI.
 local_build=$(grep -rln 'build locally' "$POOL" --include='*.md' || true)
 if [[ -z "$local_build" ]]; then

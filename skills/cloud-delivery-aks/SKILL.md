@@ -16,7 +16,7 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 - **Per-PR ephemeral preview environments.** Each PR deploys to its own isolated namespace on AKS for review, **torn down on merge/close.** The integration-test bed; cheap to create and destroy.
 - **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to the endpoints in `observability-and-slos`), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use an **HPA** for load.
 - **Progressive delivery to prod.** Canary or blue-green via Argo Rollouts / Flagger with automated metric analysis tied to SLOs; a failed canary **aborts automatically.**
-- **Rollback is first-class and rehearsed.** Immutable SHA-tagged images make rollback a redeploy of the prior tag (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
+- **Rollback is first-class and rehearsed.** Immutable, digest-addressed images make rollback a redeploy of the previously-good digest (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
 - **Migrations are a separate, ordered pipeline step**, expand-safe (see `zero-downtime-migrations`), run **before** the code that depends on them — never bundled into the pod that needs the new schema.
 - **CI is the gate:** lint, typecheck, contract checks, tests, security scans block merge. CI also **builds the image and publishes its provenance attestation**, then promotes that digest unchanged.
 - **Dev/prod parity & config from the environment.** Secrets from **Azure Key Vault** (via Secrets Store CSI driver or sealed secrets) — never in images or committed `.env`. Ports/config from env. Dev-only tooling (pgTAP, test runners) never ships in prod images.
@@ -33,8 +33,8 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 
 **Retag safety.** Squash-merge produces a different commit SHA and, if main moved while the PR was open, a different *tree*. Two guards:
 
-- Require **"branches up to date before merging"** — a ruleset flag separate from required checks — so the squash tree equals the PR head tree by construction.
-- Verify rather than assume: compare `git rev-parse <merge>^{tree}` against the PR head tree. Equal → retag. Unequal → rebuild at the merge SHA. That is not the per-environment rebuild the Delivery Rules forbid: an unequal tree means the content itself differs from what preview validated, so there is no promotable artifact to reuse — and the rebuilt image enters staging as a fresh candidate rather than a promotion.
+- Require **"branches up to date before merging"** — a sub-setting of the required-status-checks rule — so the squash tree equals the PR head tree by construction. This guard needs branch protection, so it exists only in `enforced` mode; a project in `advisory` mode has the tree comparison below as its sole guard, and should expect the rebuild path to be routine rather than exceptional.
+- Verify rather than assume: compare `git rev-parse <merge>^{tree}` against the PR head tree. Equal → retag. Unequal → rebuild at the merge SHA. That is not the per-environment rebuild the Delivery Rules forbid: an unequal tree means the content itself differs from what preview validated, so there is no promotable artifact to reuse — and the rebuilt image enters staging as a fresh candidate rather than a promotion. Note what is given up when this path is taken: that image was never reviewed in a preview environment, so "the shipped image is the reviewed image" does not hold for it. Staging is then its first validation, not its second.
 
 The retag is a pointer operation — no rebuild, no pull:
 
@@ -58,7 +58,7 @@ Attestation stays bound to the PR head SHA, so record the head→merge mapping i
 | Secrets | Key Vault → CSI driver; rotated; never in image |
 | Health | liveness + readiness + startup probes; readiness checks real deps |
 | Safe rollout | canary/blue-green, SLO-gated, auto-abort on failure |
-| Rollback | redeploy prior SHA tag; rehearsed before risky ships |
+| Rollback | redeploy the previously-good digest; rehearsed before risky ships |
 | Per-PR env | isolated namespace, torn down on merge |
 | Schema | separate ordered step, expand-safe, before code |
 | Promotion | Retag the digest; never rebuild per environment |

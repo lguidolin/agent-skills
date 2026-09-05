@@ -7,13 +7,13 @@ description: Use when setting up or changing CI, pre-push hooks, or a task runne
 
 ## Overview
 
-Where verification lives and what makes it real. **CI is the source of truth; the local hook is a convenience mirror.** A rule not enforced by an unbypassable gate is a suggestion (Principle 7).
+Where verification lives and what makes it real. **CI is the source of truth; the local hook is a convenience mirror.** A rule not enforced by an unbypassable gate is a suggestion (Principle 7) — so where the platform cannot supply that gate, the project declares `advisory` mode and carries the rule deliberately, rather than assuming machinery it does not have.
 
 ## The Rules
 
 - **One task runner is the canonical entry to every everyday operation** — test, build, dev, deploy are named recipes. A procedure that lives only in someone's head doesn't reliably happen and can't be handed to an agent.
-- **CI is the source of truth — authoritative, shared, unbypassable.** Lint, typecheck, contract checks, tests, security scans, commit validation all run here and **must pass before merge**. What CI says is what counts.
-- **The pre-push hook is a presubmit mirror, not a wall.** It runs the same fast checks locally so you *probably* pass CI before pushing. It is explicitly **bypassable** (`--no-verify`) and only runs where the toolchain is installed. Its job is speed and early feedback, not enforcement. **The hook never gates; CI gates.**
+- **CI is the source of truth — authoritative, shared, and unbypassable wherever the platform allows it.** Lint, typecheck, contract checks, tests, security scans, commit validation all run here and **must pass before merge** in `enforced` mode. What CI says is what counts. In `advisory` mode the same checks run and report; the gate is discipline, and that is never a reason to run fewer checks.
+- **The pre-push hook is a presubmit mirror, not a wall.** It runs the same fast checks locally so you *probably* pass CI before pushing. It is explicitly **bypassable** (`--no-verify`) and only runs where the toolchain is installed. Its job is speed and early feedback, not enforcement. **The hook never gates; CI gates wherever the platform allows it.**
 - **Keep CI fast by tiering, not by removing checks.** When the full suite outgrows every-PR, split **presubmit** (fast subset, blocks PR) from **postsubmit** (full suite, after merge, blocks promotion) — never move authoritative checks back to the bypassable hook.
 - **Container images build in CI**, identified by content digest and published with a provenance attestation. Keep it affordable with registry layer caching or a self-hosted runner — never by moving the build back to a laptop, where the artifact's provenance cannot be verified by anyone else.
 - **Declare the enforcement mode.** `enforced` — CI blocks merge via branch protection; what CI says is what counts. `advisory` — CI runs and reports, and the gate is discipline, because branch protection is unavailable (a private repository on a free plan). Advisory is legitimate; claiming enforcement you do not have is not. State the mode in the project's first decision record, and what would move it to enforced.
