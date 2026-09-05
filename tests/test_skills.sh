@@ -106,4 +106,7 @@ fi
 assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "production runs only a digest a lower environment validated"
 assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "A human decision precedes production"
 
+assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "imagetools create"
+assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "workflow_dispatch"
+
 report_results

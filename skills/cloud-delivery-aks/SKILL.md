@@ -21,6 +21,36 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 - **CI is the gate:** lint, typecheck, contract checks, tests, security scans block merge. CI also **builds the image and publishes its provenance attestation**, then promotes that digest unchanged.
 - **Dev/prod parity & config from the environment.** Secrets from **Azure Key Vault** (via Secrets Store CSI driver or sealed secrets) — never in images or committed `.env`. Ports/config from env. Dev-only tooling (pgTAP, test runners) never ships in prod images.
 
+## The Pipeline
+
+| Tier | Trigger | Environment | Digest |
+|---|---|---|---|
+| preview | PR opened / synchronize | ephemeral ns `preview-<app>-pr-<N>` | built here, tagged `sha-<pr-head>` |
+| staging | merge to main | persistent ns `staging` | **retag** of the preview digest as `sha-<merge>` |
+| production | release published + approval | ns `production` | digest of the release commit's **parent** |
+
+**Why the parent commit.** release-please's release commit changes `CHANGELOG.md` and the manifest, so its tree matches no image ever built. Its parent is the last feature merge — exactly what staging has been soaking. Deriving the digest from git rather than from live cluster state keeps promotion reproducible.
+
+**Retag safety.** Squash-merge produces a different commit SHA and, if main moved while the PR was open, a different *tree*. Two guards:
+
+- Require **"branches up to date before merging"** — a ruleset flag separate from required checks — so the squash tree equals the PR head tree by construction.
+- Verify rather than assume: compare `git rev-parse <merge>^{tree}` against the PR head tree. Equal → retag. Unequal → rebuild at the merge SHA.
+
+The retag is a pointer operation — no rebuild, no pull:
+
+```bash
+docker buildx imagetools create -t "$REPO:sha-$MERGE_SHA" "$REPO@sha256:$DIGEST"
+```
+
+Attestation stays bound to the PR head SHA, so record the head→merge mapping in the deployment record; image config cannot be edited without rebuilding.
+
+**The approval gate — one property, two mechanisms:**
+
+| Mode | Mechanism |
+|---|---|
+| `enforced` | GitHub Environment `production` with required reviewers |
+| `advisory` | A `workflow_dispatch` promote job; running it *is* the decision |
+
 ## Quick Reference
 
 | Concern | Mechanism |
@@ -31,6 +61,8 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 | Rollback | redeploy prior SHA tag; rehearsed before risky ships |
 | Per-PR env | isolated namespace, torn down on merge |
 | Schema | separate ordered step, expand-safe, before code |
+| Promotion | Retag the digest; never rebuild per environment |
+| Approval | Environment reviewers (enforced) or manual dispatch (advisory) |
 
 **Why this is quarantined:** all Azure/k8s specifics live here behind a stack-specific trigger. A local-only or different-cloud project substitutes its own delivery skill; the *principles* (immutable artifact, reversible + progressive deploy, decoupled migrations) come from `resilience-and-deploy-safety`.
 
