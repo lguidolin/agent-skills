@@ -70,7 +70,8 @@ others cite.
 
 - **Status:** `open`
 - **Raised:** 2026-09-04
-- **Trigger:** before `gphin-plus` (or any app repo) adopts the deployment CI.
+- **Trigger:** before another app repo adopts the deployment CI, or before `gphin-plus` does.
+- **Adoption status (verified 2026-09-04):** `gphin/mass-gathering-report-web` has already installed these workflows. `gphin/gphin-plus` has not — it has no `.github/workflows` at all.
 
 `gphin-plus-launchpad/templates/install-deployment-ci/` predates the promotion
 design and disagrees with it:
@@ -85,6 +86,13 @@ design and disagrees with it:
 - No staging tier exists in `tofu/environments/` (`bootstrap` and `prod` only).
 - No approval gate: `release: published` deploys straight to production.
 - Plain rolling update; no canary, though Article XIX requires one.
-- **Preview namespaces copy secrets out of the production namespace**, so every
-  PR environment receives production credentials — a least-privilege violation
-  under `defense-in-depth-security`, and the most urgent item here.
+- **The template copies secrets out of the production namespace into every per-PR
+  namespace** — `alpha-deploy.yml.tmpl`, step "Copy app secrets from prod
+  namespace" — so a preview environment would receive production credentials, a
+  least-privilege violation under `defense-in-depth-security`. **Verified
+  2026-09-04:** the one repo that has adopted these workflows,
+  `mass-gathering-report-web`, does NOT carry that step; its copy requires the
+  secret to be seeded into the namespace beforehand and fails if it is absent.
+  This is therefore a latent defect in the template that takes effect on the next
+  adoption, not a confirmed live exposure — and it is the most urgent item here.
+  The check covered those two repositories only.
