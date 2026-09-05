@@ -12,8 +12,8 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 ## Delivery Rules
 
 - **Local dev runs the full stack** via Docker Compose, one command, comprehensive — a first-class requirement.
-- **Images build locally → GHCR, tagged by commit SHA** (the deliberate CI exception from `merge-gates-and-automation`), then **promoted unchanged** dev → alpha → prod. Never rebuilt per environment.
-- **Per-PR ephemeral alpha environments.** Each PR deploys to its own isolated namespace on AKS for review, **torn down on merge/close.** The integration-test bed; cheap to create and destroy.
+- **Images build in CI → GHCR, identified by content digest**, then **promoted unchanged** preview → staging → production. Never rebuilt per environment.
+- **Per-PR ephemeral preview environments.** Each PR deploys to its own isolated namespace on AKS for review, **torn down on merge/close.** The integration-test bed; cheap to create and destroy.
 - **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to the endpoints in `observability-and-slos`), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use an **HPA** for load.
 - **Progressive delivery to prod.** Canary or blue-green via Argo Rollouts / Flagger with automated metric analysis tied to SLOs; a failed canary **aborts automatically.**
 - **Rollback is first-class and rehearsed.** Immutable SHA-tagged images make rollback a redeploy of the prior tag (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.

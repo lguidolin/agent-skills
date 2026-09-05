@@ -214,7 +214,8 @@ Things will break. The constitution's stance is not "prevent all failure" but "f
 
 **Deploy safety — every deploy is reversible and progressively exposed.**
 
-- **The artifact is immutable and promoted, not rebuilt.** One image, built once, tagged by commit SHA, moves dev → alpha → prod unchanged. Rebuilding per environment means you deploy something you never tested.
+- **The artifact is immutable and promoted, not rebuilt.** One image, built once in CI and identified by its **content digest**, moves preview → staging → production unchanged. Tags are mutable pointers; the digest is the artifact's identity and the unit of promotion. Rebuilding per environment means you deploy something you never tested.
+- **The running version comes from the environment, not from the build.** Baking a version into the image forces a rebuild to stamp a release, which destroys build-once. Inject it at deploy time.
 - **Roll forward only when you can roll back.** A rollback path exists and is tested *before* a risky change ships. "How do we undo this?" is answered in the plan, not during the incident.
 - **Progressive exposure.** New versions reach users gradually (health-gated rollout, and canary where the platform supports it), so a bad release harms a fraction, not everyone.
 - **Schema changes are decoupled from code deploys** and follow expand/contract (Article XVII). A deploy must never require a simultaneous destructive migration.
@@ -318,7 +319,7 @@ Things will break. The constitution's stance is not "prevent all failure" but "f
 - **One bootstrap source of truth** shared by the local/Docker init path and the shadow/test database, so every environment is built identically.
 
 **Zero-downtime rules — expand/contract (parallel change).**
-**Applies when:** the database holds data that must survive the deploy (alpha-with-data and production). **Exempt:** local/reset-friendly projects (e.g. rendvu local-only), where final-form definitions suffice — but write committed migrations as if expand/contract applies, so promotion to a real environment is never a rewrite.
+**Applies when:** the database holds data that must survive the deploy (staging-with-data and production). **Exempt:** local/reset-friendly projects (e.g. rendvu local-only), where final-form definitions suffice — but write committed migrations as if expand/contract applies, so promotion to a real environment is never a rewrite.
 
 A schema change that an app version depends on is split across **three releases**, never one:
 
@@ -356,8 +357,9 @@ A schema change that an app version depends on is split across **three releases*
 *Implements: Article XII (deploy safety) and Article VIII (delivery) on Azure Kubernetes.*
 
 - **Local dev runs the full stack** via Docker Compose, one command, comprehensive — a first-class requirement.
-- **Images build locally → GHCR, tagged by commit SHA** (the Article VIII exception), then **promoted unchanged** dev → alpha → prod. Never rebuilt per environment.
-- **Per-PR ephemeral alpha environments.** Each PR deploys to its own isolated namespace (or equivalent) on AKS for review, and is **torn down on merge/close**. This is the integration-test bed; it must be cheap to create and destroy.
+- **Images build in CI → GHCR and are promoted by digest** (Article VIII), moving preview → staging → production unchanged. Never rebuilt per environment.
+- **Per-PR ephemeral preview environments.** Each PR deploys to its own isolated namespace (or equivalent) on AKS for review, and is **torn down on merge/close**. This is the integration-test bed; it must be cheap to create and destroy.
+- **A persistent staging tier receives every merge to main**, so staging always reflects main's tip and cannot drift from it. Production promotes the digest staging validated, after a human decision.
 - **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to Article XVI endpoints), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use a **HorizontalPodAutoscaler** for load.
 - **Progressive delivery to prod.** Canary or blue-green via the platform (e.g. Argo Rollouts / Flagger) with automated metric analysis tied to SLOs (Article IX); a failed canary aborts automatically.
 - **Rollback is first-class and rehearsed.** Because images are immutable and SHA-tagged, rollback is redeploying the prior tag (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.

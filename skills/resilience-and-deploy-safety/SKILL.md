@@ -11,7 +11,7 @@ Things will break. The stance is not "prevent all failure" but **fail small, rec
 
 ## Deploy Safety — Every Deploy Reversible and Progressively Exposed
 
-- **The artifact is immutable and promoted, not rebuilt.** One image, built once, tagged by commit SHA, moves dev → alpha → prod unchanged. Rebuilding per environment means deploying something you never tested.
+- **The artifact is immutable and promoted, not rebuilt.** One image, built once in CI and identified by its **content digest**, moves preview → staging → production unchanged. Rebuilding per environment means deploying something you never tested.
 - **Roll forward only when you can roll back.** A rollback path exists and is tested *before* a risky change ships. "How do we undo this?" is answered in the plan, not during the incident.
 - **Progressive exposure.** New versions reach users gradually (health-gated rollout, canary where supported), so a bad release harms a fraction, not everyone.
 - **Schema changes are decoupled from code deploys** and follow expand/contract (see `zero-downtime-migrations`). A deploy must never require a simultaneous destructive migration.

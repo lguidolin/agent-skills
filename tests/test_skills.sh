@@ -78,4 +78,14 @@ if [[ -n "$plugin_skills" ]]; then
   fi
 fi
 
+# Tier names are preview → staging → production. "Alpha" was ambiguous — a
+# persistent tier in Article XIX, an ephemeral per-PR namespace in the
+# launchpad templates — and is retired.
+stale_alpha=$(grep -rln '\balpha\b' "$POOL" --include='*.md' || true)
+if [[ -z "$stale_alpha" ]]; then
+  _pass
+else
+  _fail "skills use the retired tier name 'alpha'" "$(echo "$stale_alpha" | tr '\n' ' ')"
+fi
+
 report_results

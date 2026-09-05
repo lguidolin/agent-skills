@@ -17,7 +17,7 @@ Schema change discipline that keeps a running system up during a rolling deploy.
 
 ## Expand/Contract (Parallel Change)
 
-**Applies when:** the database holds data that must survive the deploy (alpha-with-data, production). **Exempt:** local/reset-friendly projects — but write committed migrations *as if* this applies, so promotion is never a rewrite.
+**Applies when:** the database holds data that must survive the deploy (staging-with-data, production). **Exempt:** local/reset-friendly projects — but write committed migrations *as if* this applies, so promotion is never a rewrite.
 
 A schema change is split across **three releases**, never one:
 
