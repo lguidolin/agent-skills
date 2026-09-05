@@ -211,7 +211,7 @@ Affected in launchpad (later cycle): `alpha-<app>-pr-N` namespaces,
 | `merge-gates-and-automation` | Retire the exception bullet and its Common Rationalizations row; add enforcement modes |
 | `resilience-and-deploy-safety` | Add the promotion property; digest-not-tag; version injection |
 | `cloud-delivery-aks` | Add the tier table, retag mechanics, approval-gate mechanisms; rename alpha→preview |
-| `ship-it` | One line: merge triggers a staging deploy. No new phase |
+| `ship-it` | Phase 3 gains preview verification; skill ends its deploy awareness at preview. Explicitly disclaims staging/production. Phases 4-6 unchanged |
 | `docs/superpowers/future-considerations.md` | Close this entry; open two new ones |
 
 ## Known deviations (current templates)
@@ -229,9 +229,11 @@ Recorded, not fixed:
 
 ## Open items
 
-- **`ship-it` scope** — proposed: it ends at merge and cleanup, gaining only a
-  note that merge triggered a staging deploy. Promotion is a separate skill.
-  Unchallenged, not explicitly confirmed.
+- **`ship-it` scope** — resolved: its deployment awareness ends when the preview
+  is online. It verifies the preview came up after opening the PR and says
+  nothing about staging or production; promotion belongs to the cycle skill.
+  Phases 4-6 (merge wait, archival, cleanup) are git/doc hygiene and are
+  unaffected.
 - **GitHub plan for the `gphin` org** — determines whether the enforced-mode
   approval mechanism is available.
 
