@@ -15,7 +15,7 @@ starting new work so nothing is silently forgotten. See the
 
 ## Deploy pipeline: staging promotion and infra-repo coordination
 
-- **Status:** `open`
+- **Status:** `done`
 - **Raised:** 2026-08-27
 - **Trigger:** next substantive change to the deploy path, or the next release
   that needs a staging soak.
@@ -43,3 +43,48 @@ or await an infra action, and the two repos' pipelines need a defined contract
 
 **Do not** start this before the current skills-integration work is merged —
 they touch `ship-it` and `resilience-and-deploy-safety` in overlapping places.
+- **Resolved:** 2026-09-04 by the deployment cycle design; see the decision record. Layer 3 (the launchpad cycle skill) and the template remediation below remain.
+
+---
+
+## Scale-down guidance is missing from 17 of 19 skills
+
+- **Status:** `open`
+- **Raised:** 2026-09-04
+- **Trigger:** next time a skill is applied to a solo or pre-launch project and
+  its mechanism does not fit.
+
+Only `resilience-and-deploy-safety` and `observability-and-slos` carry a "When to
+scale this" section. The collection is wanted for solo projects (SaaS, apps,
+CLIs) as well as GoC work, and the discipline is invariant across both — but the
+mechanisms are not, and most skills state mechanism and intent in the same
+breath.
+
+**What to decide when this is picked up:** whether every skill gets a "When to
+scale this" section, or whether the distinction belongs in one place that the
+others cite.
+
+---
+
+## Launchpad deployment templates contradict the promotion design
+
+- **Status:** `open`
+- **Raised:** 2026-09-04
+- **Trigger:** before `gphin-plus` (or any app repo) adopts the deployment CI.
+
+`gphin-plus-launchpad/templates/install-deployment-ci/` predates the promotion
+design and disagrees with it:
+
+- Builds are local and per-environment; there is no promotion. `:pr-<N>` is a
+  mutable tag, and production consumes a separately built `:<semver>` image.
+- `build-push.sh.tmpl` satisfies none of the old Article VIII mitigations
+  (clean tree, pinned digests, SHA tag) — the exception was invoked, never
+  implemented.
+- `APP_VERSION` is baked in as a build argument, which makes build-once
+  impossible.
+- No staging tier exists in `tofu/environments/` (`bootstrap` and `prod` only).
+- No approval gate: `release: published` deploys straight to production.
+- Plain rolling update; no canary, though Article XIX requires one.
+- **Preview namespaces copy secrets out of the production namespace**, so every
+  PR environment receives production credentials — a least-privilege violation
+  under `defense-in-depth-security`, and the most urgent item here.
