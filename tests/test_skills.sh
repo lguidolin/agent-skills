@@ -93,7 +93,7 @@ assert_file_contains "$CONST" "Container images build in CI"
 assert_file_contains "$CONST" "Enforcement mode is declared, never assumed"
 
 assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "advisory"
-assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "enforced"
+assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "Declare the enforcement mode"
 
 # The Article VIII local-build exception is retired everywhere: images build in CI.
 local_build=$(grep -rln 'build locally' "$POOL" --include='*.md' || true)
