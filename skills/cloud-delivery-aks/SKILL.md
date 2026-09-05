@@ -18,7 +18,7 @@ The delivery mechanism for Kubernetes/Azure. Implements **deploy safety** and th
 - **Progressive delivery to prod.** Canary or blue-green via Argo Rollouts / Flagger with automated metric analysis tied to SLOs; a failed canary **aborts automatically.**
 - **Rollback is first-class and rehearsed.** Immutable, digest-addressed images make rollback a redeploy of the previously-good digest (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
 - **Migrations are a separate, ordered pipeline step**, expand-safe (see `zero-downtime-migrations`), run **before** the code that depends on them — never bundled into the pod that needs the new schema.
-- **CI is the gate:** lint, typecheck, contract checks, tests, security scans block merge. CI also **builds the image and publishes its provenance attestation**, then promotes that digest unchanged.
+- **CI is the gate:** lint, typecheck, contract checks, tests, security scans run on every change, and block merge in `enforced` mode. CI also **builds the image and publishes its provenance attestation**, then promotes that digest unchanged.
 - **Dev/prod parity & config from the environment.** Secrets from **Azure Key Vault** (via Secrets Store CSI driver or sealed secrets) — never in images or committed `.env`. Ports/config from env. Dev-only tooling (pgTAP, test runners) never ships in prod images.
 
 ## The Pipeline
