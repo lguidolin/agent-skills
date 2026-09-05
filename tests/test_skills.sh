@@ -88,4 +88,8 @@ else
   _fail "skills use the retired tier name 'alpha'" "$(echo "$stale_alpha" | tr '\n' ' ')"
 fi
 
+CONST="$POOL/engineering-constitution/references/engineering-constitution.md"
+assert_file_contains "$CONST" "Container images build in CI"
+assert_file_contains "$CONST" "Enforcement mode is declared, never assumed"
+
 report_results
