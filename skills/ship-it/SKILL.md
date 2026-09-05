@@ -147,6 +147,22 @@ gh pr create --title "<conventional commit message>" --body "<PR body>"
 
 If `gh` is not available, provide the PR URL from git push output or construct it.
 
+**Verify the preview environment came up.** If the project deploys per-PR
+previews, wait for that workflow and confirm the environment is reachable
+before handing the PR over:
+
+```bash
+gh pr checks --watch
+```
+
+If the preview fails to deploy, report it and stop. A PR nobody can review is
+not shipped.
+
+**Where this skill stops.** `ship-it` ends its deployment awareness at the
+preview. Staging and production promotion are not its job — they belong to the
+project's delivery skill (`cloud-delivery-aks`, or its equivalent). Phases 4-6
+below are git and documentation hygiene, not deployment.
+
 ### Phase 4: Wait for Merge
 
 After PR is created, ask: "Let me know when it's merged and I'll handle cleanup and archival."
@@ -244,6 +260,7 @@ If that skill is unavailable, remove the worktree manually with
 - **Never push to main directly** — always branch + PR. The PR *is* the preview
   deployment and the CI gate; a local merge skips both. This overrides any
   workflow that offers merging locally as a choice.
+- **Shipping ends at the preview** — merge, archival, and cleanup are hygiene; promotion to staging and production is a separate skill's job
 - **Conventional commits** — the PR title is the changelog entry
 - **Archive after merge only** — specs stay accessible during review
 - **Decision records are compact** — ~30-50 lines, YAML-indexed, LLM-optimized

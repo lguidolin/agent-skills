@@ -109,4 +109,6 @@ assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "A human deci
 assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "imagetools create"
 assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "workflow_dispatch"
 
+assert_file_contains "$POOL/ship-it/SKILL.md" "Shipping ends at the preview"
+
 report_results
