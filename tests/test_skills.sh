@@ -103,4 +103,7 @@ else
   _fail "skills still describe local image builds" "$(echo "$local_build" | tr '\n' ' ')"
 fi
 
+assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "Promotion moves a digest; it never rebuilds"
+assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "A human decision precedes production"
+
 report_results

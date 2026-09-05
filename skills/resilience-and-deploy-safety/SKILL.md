@@ -12,6 +12,10 @@ Things will break. The stance is not "prevent all failure" but **fail small, rec
 ## Deploy Safety — Every Deploy Reversible and Progressively Exposed
 
 - **The artifact is immutable and promoted, not rebuilt.** One image, built once in CI and identified by its **content digest**, moves preview → staging → production unchanged. Rebuilding per environment means deploying something you never tested.
+- **Promotion moves a digest; it never rebuilds.** Tags are mutable pointers and can be overwritten. A content digest cannot. Each environment records the digest it validated, and **production runs only a digest a lower environment validated** — so "the exact thing we tested" is a property the pipeline enforces, not a discipline someone has to remember.
+- **A human decision precedes production.** For a solo maintainer this is a deliberate pause and an audit record rather than separation of duties. Say which it is; do not oversell it.
+- **The running version is injected at deploy time, never baked into the image.** A version baked as a build argument forces a rebuild to stamp a release, and the rebuild is exactly what promotion exists to avoid.
+- **When infrastructure lives in its own repository, coordinate by expand/contract.** Infrastructure **expands** first (additive, backward-compatible), the application consumes the new capability in a later deploy, and infrastructure **contracts** only once no live artifact depends on the old shape — the same discipline as a schema change (see `zero-downtime-migrations`). The invariant: **never ship an application artifact that requires an infrastructure change not yet live.** Held to that, each repository is independently reversible, which is what makes rollback tractable when the two are out of step.
 - **Roll forward only when you can roll back.** A rollback path exists and is tested *before* a risky change ships. "How do we undo this?" is answered in the plan, not during the incident.
 - **Progressive exposure.** New versions reach users gradually (health-gated rollout, canary where supported), so a bad release harms a fraction, not everyone.
 - **Schema changes are decoupled from code deploys** and follow expand/contract (see `zero-downtime-migrations`). A deploy must never require a simultaneous destructive migration.
@@ -28,7 +32,8 @@ Things will break. The stance is not "prevent all failure" but **fail small, rec
 
 | Before a risky deploy | Confirm |
 |---|---|
-| Artifact | Immutable, SHA-tagged, same one tested in lower envs |
+| Artifact | Built once in CI; promoted by digest; the same one staging validated |
+| Gate | A human decision recorded before production |
 | Rollback | Path exists and is tested |
 | Exposure | Gradual/canary, not all-at-once |
 | Schema | Expand-safe, decoupled from the code deploy |
@@ -36,6 +41,6 @@ Things will break. The stance is not "prevent all failure" but **fail small, rec
 
 ## When to scale this
 
-Local/pre-launch projects write these rules now, activate on first real users. Stack mechanisms (k8s probes, canary, per-PR envs): `cloud-delivery-aks`.
+Local/pre-launch projects write these rules now, activate on first real users. The properties are portable — build once, promote what you tested, decide before production, be able to roll back — but the mechanisms are not: a digest promotion is meaningful on a container host and largely moot for a static site, and a managed platform may supply preview environments and instant rollback for free. Name the mechanism in the project's delivery skill; keep the property here. Stack mechanisms (k8s probes, canary, per-PR envs): `cloud-delivery-aks`.
 
 Full rationale: Article XII of the constitution, bundled at `engineering-constitution/references/engineering-constitution.md`.
