@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.0](https://github.com/lguidolin/agent-skills/compare/v0.8.0...v0.9.0) (2026-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* define the preview to production deployment cycle ([#21](https://github.com/lguidolin/agent-skills/issues/21))
+
+### Features
+
+* define the preview to production deployment cycle ([#21](https://github.com/lguidolin/agent-skills/issues/21)) ([1bdfd5e](https://github.com/lguidolin/agent-skills/commit/1bdfd5e77b539db78ee2fabf02a3332bcd91f353))
+
 ## [0.8.0](https://github.com/lguidolin/agent-skills/compare/v0.7.0...v0.8.0) (2026-08-31)
 
 
