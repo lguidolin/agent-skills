@@ -96,3 +96,59 @@ design and disagrees with it:
   This is therefore a latent defect in the template that takes effect on the next
   adoption, not a confirmed live exposure — and it is the most urgent item here.
   The check covered those two repositories only.
+
+---
+
+## `ship-it` Phase 5 pushes to `main`, which its own rules forbid
+
+- **Status:** `open`
+- **Raised:** 2026-09-06
+- **Trigger:** next time `ship-it` runs its post-merge archival, i.e. the next
+  spec/plan that reaches merge.
+
+Phase 5 step 4 instructs `git add docs/superpowers/ && git commit && git push`
+while the working tree is on `main` — Phase 6 has already run `git checkout
+main`. That contradicts the skill's own Key Principle, *"Never push to main
+directly — always branch + PR"*, and it cannot succeed in this repository at
+all: ruleset `15161858` requires a pull request for `main`, so the push is
+rejected.
+
+Found by executing the skill: the 2026-09-04 deployment-cycle archival had to
+branch and open PR #23 instead of following Phase 5 literally.
+
+**What to decide when this is picked up:** whether Phase 5 gains its own
+branch-and-PR steps, or whether archival is folded into the feature branch
+before merge (which would contradict "archive after merge, never before"), or
+whether Phases 5-6 are reordered so archival happens before the return to
+`main`.
+
+---
+
+## Nothing checks that a new test assertion would fail without its change
+
+- **Status:** `open`
+- **Raised:** 2026-09-06
+- **Trigger:** next plan that specifies test assertions, or next time
+  `tests-as-a-control` is revised.
+
+An assertion satisfied by text that already existed is decoration, not a
+control: it passes before the change lands and would keep passing if the change
+were reverted. Two such assertions were written into the 2026-09-04 deployment
+cycle plan and shipped into `tests/test_skills.sh` before review caught them —
+one matched a pre-existing sentence containing the word "enforced", the other a
+pre-existing "content digest". Both were retargeted to strings unique to the new
+content, and the fix was proved by deleting the guarded text and watching the
+suite go red.
+
+`tests-as-a-control` requires test-first but does not state the property that
+makes test-first meaningful — that the test must be *observed* failing, and that
+an assertion which never failed has not been shown to guard anything. The
+plan-authoring side has the same gap: `superpowers:writing-plans`' self-review
+checks placeholders, spec coverage and type consistency, but never asks whether
+each specified assertion would fail if its change were absent.
+
+**What to decide when this is picked up:** whether the rule belongs in
+`tests-as-a-control` as a house rule about non-vacuous assertions (this repo can
+change that), and separately whether to report the plan-authoring gap upstream
+to the superpowers plugin (this repo must not vendor a copy of that skill — see
+"What Belongs in This Repo" in README.md).
