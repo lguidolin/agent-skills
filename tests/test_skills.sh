@@ -78,4 +78,41 @@ if [[ -n "$plugin_skills" ]]; then
   fi
 fi
 
+# Tier names are preview → staging → production. "Alpha" was ambiguous — a
+# persistent tier in Article XIX, an ephemeral per-PR namespace in the
+# launchpad templates — and is retired.
+stale_alpha=$(grep -rlin '\balpha\b' "$POOL" || true)
+if [[ -z "$stale_alpha" ]]; then
+  _pass
+else
+  _fail "skills use the retired tier name 'alpha'" "$(echo "$stale_alpha" | tr '\n' ' ')"
+fi
+
+CONST="$POOL/engineering-constitution/references/engineering-constitution.md"
+assert_file_contains "$CONST" "Container images build in CI"
+assert_file_contains "$CONST" "Enforcement mode is declared, never assumed"
+
+assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "advisory"
+assert_file_contains "$POOL/merge-gates-and-automation/SKILL.md" "Declare the enforcement mode"
+
+# NOTE: `merge-gates-and-automation` deliberately contains the phrase "build the
+# image locally" in a Common Rationalizations row. That does NOT match the fixed
+# string below. If you ever reword that row to "build locally", this check fails
+# on the repo's own text.
+# The Article VIII local-build exception is retired everywhere: images build in CI.
+local_build=$(grep -rln 'build locally' "$POOL" --include='*.md' || true)
+if [[ -z "$local_build" ]]; then
+  _pass
+else
+  _fail "skills still describe local image builds" "$(echo "$local_build" | tr '\n' ' ')"
+fi
+
+assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "production runs only a digest a lower environment validated"
+assert_file_contains "$POOL/resilience-and-deploy-safety/SKILL.md" "A human decision precedes production"
+
+assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "imagetools create"
+assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "workflow_dispatch"
+
+assert_file_contains "$POOL/ship-it/SKILL.md" "Shipping ends at the preview"
+
 report_results
