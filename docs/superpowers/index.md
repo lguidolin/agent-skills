@@ -7,6 +7,7 @@
 | Component | Title | Date | Dependencies |
 |-----------|-------|------|--------------|
 | skills | Align house skills with superpowers workflows | 2026-08-27 | — |
+| skills | Define the preview to production deployment cycle | 2026-09-04 | 2026-08-27-superpowers-integration |
 
 ## Superseded
 
