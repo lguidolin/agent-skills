@@ -135,4 +135,15 @@ else
   _fail "TIER 2 has regrown to $tier2_lines lines (limit 60)" "mechanism detail belongs in the stack skills, not the always-on constitution"
 fi
 
+# Nothing before TIER 2 may name a specific stack. Tier 1 and the reading
+# instructions travel to every project unchanged, so a stack noun here asserts
+# one project's tooling on every other one.
+tier1=$(awk '/^# TIER 2/{exit} {print}' "$CONST")
+stack_leak=$(printf '%s' "$tier1" | grep -icE 'PostGraphile|PostgreSQL|Kubernetes|Azure|graphile-migrate|\bAKS\b' || true)
+if [[ "$stack_leak" -eq 0 ]]; then
+  _pass
+else
+  _fail "Tier 1 names a specific stack on $stack_leak line(s)" "the stack profile is declared per project (Article XX), never assumed in the always-on text"
+fi
+
 report_results
