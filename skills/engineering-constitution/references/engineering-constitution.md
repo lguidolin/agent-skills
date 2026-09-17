@@ -2,7 +2,7 @@
 
 *A portable charter of working practices and stack laws, written to be handed to an AI agent (or human) starting a new project. It encodes how we work, why we work that way, how we operate what we ship, and how to adapt when the project differs.*
 
-> **How to read this document.** Tier 1 is universal and travels to every project unchanged. Tier 2 is the mechanism for a specific stack (PostgreSQL · PostGraphile · graphile-migrate · React/TanStack · Docker · Azure Kubernetes) and is swapped when the stack differs. Every article carries an **Enforcement** line naming the tooling that makes it real — or labeling it honestly as reviewer judgment. Where an article only applies at a certain scale or lifecycle stage, an **Applies when** line says so.
+> **How to read this document.** Tier 1 is universal and travels to every project unchanged. Tier 2 is a *map* of the mechanism layer: each of its articles names the Tier 1 principle it implements and the stack skill that owns the mechanism. Which stack a project actually uses is declared in that project's first decision record (Article XX) — never assumed here. Every article carries an **Enforcement** line naming the tooling that makes it real — or labeling it honestly as reviewer judgment. Where an article only applies at a certain scale or lifecycle stage, an **Applies when** line says so.
 
 ---
 
