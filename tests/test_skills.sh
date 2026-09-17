@@ -146,4 +146,10 @@ else
   _fail "Tier 1 names a specific stack on $stack_leak line(s)" "the stack profile is declared per project (Article XX), never assumed in the always-on text"
 fi
 
+# Defects found by executing the skills rather than reading them. Each fix is
+# pinned so it cannot quietly regress.
+assert_file_contains "$POOL/tests-as-a-control/SKILL.md" "An assertion that passes before the change is not a control"
+assert_file_contains "$POOL/ship-it/SKILL.md" "git checkout -b docs/archive-"
+assert_file_contains "$POOL/init-repo-CI/SKILL.md" "create-github-app-token"
+
 report_results

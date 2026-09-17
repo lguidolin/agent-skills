@@ -279,6 +279,36 @@ jobs:
           git push origin "$MAJOR_TAG" --force
 ```
 
+> **The token decides whether every release needs a manual click.** With the
+> default `GITHUB_TOKEN` above, the release PR is authored by
+> `github-actions[bot]`, and GitHub's recursion guard refuses to run workflows
+> for it. The PR's own required checks then sit at `action_required`, and
+> because branch protection requires those checks, the release cannot merge
+> until a human approves the run — every release, forever. To avoid it, mint a
+> token from a GitHub App you own and hand it to the action:
+>
+> ```yaml
+>       - uses: actions/create-github-app-token@v2
+>         id: app-token
+>         with:
+>           app-id: ${{ vars.RELEASE_APP_ID }}
+>           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+>       - uses: googleapis/release-please-action@v4
+>         id: release
+>         with:
+>           token: ${{ steps.app-token.outputs.token }}
+>           config-file: .github/release-please-config.json
+>           manifest-file: .release-please-manifest.json
+> ```
+>
+> A fine-grained PAT with Contents and Pull requests write works identically but
+> expires — and when it does, releases silently revert to needing approval with
+> no obvious cause. Staying on the default token is a legitimate choice for a
+> low-volume repo; record the click as a known cost in the first decision record
+> rather than leaving the next person to rediscover it.
+
+
+
 #### 3e. `.github/dependabot.yml`
 
 Generate one `updates` entry per ecosystem:

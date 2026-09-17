@@ -225,12 +225,21 @@ same work by hand using the steps below — they are self-contained.
    (component, title, superseded by). Run `$d/index-rebuild.sh` if you located
    it above; otherwise write the file directly.
 
-4. Commit the archival:
+4. Commit the archival **on its own branch, through a PR**. You are still on
+   the feature branch whose PR just merged, so a push here goes nowhere useful —
+   and `main` takes no direct pushes (see Key Principles), so it cannot go there
+   either. The archival is an ordinary change and uses the ordinary route:
+
    ```bash
+   git checkout main && git pull --ff-only
+   git checkout -b docs/archive-<topic>
    git add docs/superpowers/
    git commit -m "docs: archive specs and update decision index"
-   git push
+   git push -u origin docs/archive-<topic>
+   gh pr create --title "docs: archive specs and update decision index" --body "<what and why>"
    ```
+
+   Wait for that PR to merge before Phase 6, so cleanup removes both branches.
 
 ### Phase 6: Cleanup
 
