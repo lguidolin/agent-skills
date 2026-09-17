@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.1](https://github.com/lguidolin/agent-skills/compare/v0.10.0...v0.10.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* repair three defects found by executing the skills ([#29](https://github.com/lguidolin/agent-skills/issues/29)) ([e6de04b](https://github.com/lguidolin/agent-skills/commit/e6de04b630fe9345ba3d511096858c9a0a673d2b))
+* stop the constitution preamble asserting one stack ([#27](https://github.com/lguidolin/agent-skills/issues/27)) ([bf2e44f](https://github.com/lguidolin/agent-skills/commit/bf2e44ff1e43f6bafc8ba3f0b60b708bb59a3d5c))
+
 ## [0.10.0](https://github.com/lguidolin/agent-skills/compare/v0.9.0...v0.10.0) (2026-09-17)
 
 
