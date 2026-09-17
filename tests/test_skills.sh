@@ -115,4 +115,24 @@ assert_file_contains "$POOL/cloud-delivery-aks/SKILL.md" "workflow_dispatch"
 
 assert_file_contains "$POOL/ship-it/SKILL.md" "Shipping ends at the preview"
 
+# TIER 2 is a pointer layer, not a second copy of the stack skills. Each of the
+# seven stack articles (XIII-XIX) names the skill that owns its mechanism, and
+# the tier as a whole stays short enough that mechanism detail cannot creep back
+# in. The always-on constitution must not assert one stack's laws on a project
+# using another.
+CONST="$POOL/engineering-constitution/references/engineering-constitution.md"
+owned=$(grep -c '^\*\*Owned by:\*\*' "$CONST" || true)
+if [[ "$owned" -eq 7 ]]; then
+  _pass
+else
+  _fail "expected 7 'Owned by:' pointers in TIER 2, found $owned" "each of Articles XIII-XIX names the skill owning its mechanism"
+fi
+
+tier2_lines=$(awk '/^# TIER 2/,/^## Article XX/' "$CONST" | wc -l)
+if [[ "$tier2_lines" -lt 60 ]]; then
+  _pass
+else
+  _fail "TIER 2 has regrown to $tier2_lines lines (limit 60)" "mechanism detail belongs in the stack skills, not the always-on constitution"
+fi
+
 report_results

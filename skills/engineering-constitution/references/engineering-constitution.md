@@ -237,140 +237,49 @@ Things will break. The constitution's stance is not "prevent all failure" but "f
 
 # TIER 2 — STACK PROFILE
 
-*The mechanism layer for this stack — PostgreSQL · PostGraphile · graphile-migrate · React/TanStack · Docker · Azure Kubernetes (AKS). When a project uses different tooling, this entire tier is **swapped** (Article XX); Tier 1 stays. Each article names the Tier 1 principle it implements.*
+*The mechanism layer — a map, not the text. Each article names the Tier 1 principle it implements and the skill that owns its mechanism; that skill carries the detail and loads only when a task touches its stack. A project on different tooling therefore never has another stack's laws asserted at it. Swapping this tier (Article XX) means adopting different stack skills, not editing this document.*
 
 ## Article XIII — The Data Path
 
-*Implements: Article X (defense in depth).* There is exactly one legal path for application data:
+*Implements: Article X (defense in depth).*
 
-**Browser → App server → PostGraphile → PostgreSQL.**
+**Owned by:** `postgres-postgraphile-rls-and-sql` — a different data layer still names exactly one legal path for application data, and still passes session context as hints validated downstream rather than trusted as authorization.
 
-- The browser never talks to the GraphQL or database layer directly.
-- The app server never queries the database directly for application data — all application data flows through the GraphQL layer.
-- The app server passes **session context as headers only** (e.g. user id, org hint). It contains **no authorization logic**; context hints are validated downstream, not trusted.
-
-> **Why.** A single data path means a single place to enforce every cross-cutting concern — auth context, validation, row-level security. Side channels are exactly the holes that bypass those enforcement points.
-
-**Enforcement:** architectural lint/review — server-only modules may not be imported by client code; the app layer has no direct DB driver dependency (dependency-boundary check in CI where possible).
-
-## Article XIV — Security Mechanisms: RLS & GraphQL Hardening
+## Article XIV — Security Mechanisms: RLS & Query Hardening
 
 *Implements: Article X (security & defense in depth), Article XI (DoS via unbounded queries).*
 
-- **RLS is the final enforcement layer.** Application-layer checks are convenience and UX; the database is the wall. Data isolation is enforced where the data lives.
-- **Roles model real session states** — "not logged in," "logged in without active org context," "logged in with confirmed context," plus a connection-only role and a migration-only role. Roles mean something; they are not arbitrary labels.
-- **The privileged connection role never executes application queries.** Application queries run under a constrained role subject to RLS.
-- **`SECURITY DEFINER` functions set `search_path` inline** in their definition — every time, no exceptions.
-- **Absence is `NULL`, never an empty string.** Empty strings as sentinels are forbidden; omit the value entirely when absent.
-- **GraphQL is a denial-of-service surface — bound it.** Enforce **query depth limits** and **cost/complexity analysis**; reject queries past budget. Cap pagination page size. Set a database **`statement_timeout`** for the application roles. **Disable introspection in production** (or restrict it) unless a deliberate reason requires it.
-- **Secrets via the platform store.** On AKS: Azure Key Vault surfaced through the Secrets Store CSI driver (or sealed secrets) — never baked into images or committed `.env` files. Rotate on a schedule and on suspected exposure.
-- **Supply chain in CI.** Committed lockfiles, `pnpm audit` / Renovate (or Dependabot), pinned and Trivy-scanned base images.
-- **Audit sensitive mutations** at the database layer where feasible (who/what/when), distinct from application logs.
-
-> **Why.** RLS guarantees that even a bug in the layers above cannot leak another tenant's rows. Query-cost limiting guarantees that a single crafted GraphQL query cannot exhaust the database. Together they make the data layer safe by default rather than safe by vigilance.
-
-**Enforcement:** pgTAP role-matrix tests in CI (blocking) for RLS (Article XV §role context); depth/cost limits configured in PostGraphile and asserted by tests; `pnpm audit`/Trivy/secret-scan in CI (blocking).
+**Owned by:** `postgres-postgraphile-rls-and-sql` — a different datastore still pushes final enforcement as low as it goes, so the store is the wall and the layers above are convenience; and still bounds query cost, depth and result size.
 
 ## Article XV — The Contract Layer
 
-*Implements: Article IV (tests as a control) and Article XI (interfaces are contracts), applied to the seams between layers.* Two seams are governed here. **The cardinal rule: assert on the contract — the data shape and access semantics the consumer depends on — never on the query string itself.** A test that breaks on a cosmetic query edit is a change-detector anti-pattern; a test that breaks when the *guaranteed shape or permission* moves is a control.
+*Implements: Article IV (tests as a control) and Article XI (interfaces are contracts), applied to the seams between layers.*
 
-### §1 — The GraphQL Query Contract
-
-- **Every operation is authored once as a typed document in a known location, exported to be imported.** The UI imports it. The test imports the **exact same** artifact — never a re-typed copy. Copying a query into a test silently kills the contract (editing the UI query no longer breaks the test). This is Article VI's DRY made load-bearing.
-- **The contract breaks in both directions, by construction:**
-  - **DB → UI drift, caught at compile time.** `graphql-codegen` generates TypeScript types from the **live PostGraphile schema**. Rename or drop a field the document uses and `tsc` fails on every usage *and* on the shared document — the build breaks before a user sees a blank panel. *This is why codegen-against-live-schema is mandatory, not optional.*
-  - **UI → DB / permission drift, caught at runtime.** The shared document is executed against a **seeded test database through the real call path**, under role context, asserting on the **returned shape and access outcome** — not the query text. Add a field RLS only exposes to elevated roles, and the test running *as a plain member* now sees null/denied and breaks, forcing "did we mean to expose this?"
-- **Contract tests and the Article XIV role matrix are the same harness.** Run the one shared document through PostGraphile as role A (expect data) and role B (expect denied/empty). One mechanism proves three things at once: the query still matches the schema, the UI's data assumptions still hold, and RLS still enforces the boundary.
-
-*Worked example of catching a real bug:* a migration renames `equipment.is_active` → removes the field. Codegen regenerates from the new schema; the generated type loses the field; `tsc` fails on the shared document and every component using it — **caught at build, by the type system, before merge.** Conversely, a dev widens the UI query to pull `cancellation_reason`; the runtime test as a member asserts the member-visible shape, now gets a denial/null, and **fails — forcing a deliberate decision.** Neither test asserts "the query text equals X"; both assert the *contract*.
-
-### §2 — The Route Contract & Smoke Tests
-
-- **Routes are enumerated from a single source.** Each route has a smoke test asserting it **renders without error** and shows a **minimal required set of elements** (a heading, a landmark, a key control — not detailed interaction).
-- **Adding or removing a route forces a matching test change** — a new URL is incomplete without its smoke test; a removed URL must remove its test. URLs never appear or vanish silently.
-- **Explicitly *not* detailed UI/interaction testing.** Deliberate, scope-limited: the question is "does this URL work and render the essentials," nothing more. Deeper UI testing is deferred until there's a considered approach.
-
-> **Why.** A contract test converts an invisible coupling (the UI assumes the DB returns field X; this URL is assumed to exist) into a visible, enforced one. Move either side of the seam and the build tells you — Principle 3 operating at the boundary instead of inside a unit.
-
-**Enforcement:** `graphql-codegen` + `tsc` in CI (blocking) for the compile-time half; runtime contract + route smoke tests in CI (blocking) against a seeded test DB.
+**Owned by:** `graphql-contract-testing` — a different client or transport still defines its contract seams: one shared artifact, asserted on contract rather than string, breaking in both directions when it changes.
 
 ## Article XVI — Observability Mechanisms
 
-*Implements: Article IX.*
+*Implements: Article IX (observability & operability).*
 
-- **Structured JSON logs to stdout**, collected by the platform (AKS → Azure Monitor / Log Analytics). No free-text logging in services.
-- **OpenTelemetry** in the app server and PostGraphile; export traces and metrics to **Azure Monitor / Application Insights** (or a Prometheus/Grafana stack where preferred). 
-- **Correlation id propagated across the data path** — generated at the edge, passed Browser → App → PostGraphile (alongside the existing context headers), attached to every log line and span so one request is reconstructable end to end.
-- **RED metrics** per HTTP route and per GraphQL operation; **PostgreSQL slow-query logging** and `pg_stat_statements` for the database.
-- **Liveness and readiness endpoints** wired to Kubernetes probes (Article XIX). Readiness reflects real dependency health (can it reach the DB?), not just process-up.
-- **Frontend:** report **web-vitals** and client errors to the same telemetry backend.
-- **SLOs defined per critical journey** with dashboards and **burn-rate alerts**; alerts are actionable and symptom-based.
-
-**Enforcement:** instrumentation presence checked in review/lint; probe endpoints verified by a route smoke test (Article XV §2); SLO/alert definitions live as code in the ops repo and are reviewed.
+**Owned by:** `observability-and-slos` — a different runtime still exposes health endpoints, emits structured logs carrying a correlation id, and publishes the metrics its SLOs are computed from.
 
 ## Article XVII — Migrations & Zero-Downtime Schema Change
 
 *Implements: Article XII (deploy safety) at the schema layer.*
 
-**Authoring rules (all projects):**
+**Owned by:** `zero-downtime-migrations` — a different schema tool still evolves data by expand/contract, and still never bundles a destructive migration with the deploy that depends on it.
 
-- **Two kinds of migration, kept distinct:** the idempotent **`current/`** set (dev iteration — re-run every cycle, written `CREATE OR REPLACE` / `IF NOT EXISTS`, objects in **final form**, no post-creation `ALTER`) and **committed** migrations (the immutable, ordered migrations that actually ship). `ALTER DEFAULT PRIVILEGES` is the lone accepted inline `ALTER`.
-- **Ownership comes from how migrations are run**, not scattered `ALTER ... OWNER`.
-- **One bootstrap source of truth** shared by the local/Docker init path and the shadow/test database, so every environment is built identically.
+## Article XVIII — Schema Style
 
-**Zero-downtime rules — expand/contract (parallel change).**
-**Applies when:** the database holds data that must survive the deploy (staging-with-data and production). **Exempt:** local/reset-friendly projects (e.g. rendvu local-only), where final-form definitions suffice — but write committed migrations as if expand/contract applies, so promotion to a real environment is never a rewrite.
+*Implements: Article VI (code craft) at the schema layer.*
 
-A schema change that an app version depends on is split across **three releases**, never one:
+**Owned by:** `postgres-postgraphile-rls-and-sql` — a different schema language still favours idempotent, final-form definitions in a navigable one-object-per-file layout.
 
-1. **Expand** — add the new shape *additively* and backward-compatibly: new nullable column, new table, new function. App version *N* keeps running untouched.
-2. **Migrate** — backfill data in **bounded batches** (never one table-locking `UPDATE`); dual-write from app *N+1* if needed; switch reads to the new shape. Only now make a new column `NOT NULL` (add the constraint `NOT VALID`, then `VALIDATE` separately).
-3. **Contract** — only after app *N* is fully retired, remove the old column/constraint in a *later* release.
+## Article XIX — Delivery
 
-**PostgreSQL footguns to respect:**
-- Adding a `NOT NULL` column with a volatile/large backfill default rewrites/locks the table — add nullable, backfill in batches, then constrain.
-- Add constraints `NOT VALID` first, then `VALIDATE CONSTRAINT` (takes a weaker lock).
-- Build indexes `CONCURRENTLY` — and note this **cannot run inside a transaction**, which interacts with migration-tool transaction wrapping; isolate such steps.
-- Set `lock_timeout` / `statement_timeout` on migrations so a blocked migration fails fast instead of freezing production.
+*Implements: Article XII (deploy safety) and Article VIII (the verification gate) at the delivery layer.*
 
-> **Why.** "Final-form `CREATE OR REPLACE`" is a *developer-ergonomics* rule and is correct in dev. In production with live users and a rolling deploy, the running old pods and the new pods share one database for the duration of the rollout — so the schema must be compatible with **both** app versions at once. Expand/contract is what makes that true. Combining a destructive migration with the deploy that needs it is the classic self-inflicted outage.
-
-**Enforcement:** migrations run in CI against a shadow DB (blocking); expand/contract adherence is reviewer judgment guided by this article's checklist; destructive-statement detection in CI where mechanizable.
-
-## Article XVIII — SQL Style
-
-*Implements: Article VI (code craft) for SQL.*
-
-- **One object per file** — each table, function, policy, and grant set in its own file.
-- **Organized `schema/object_type/name`** — directory structure mirrors the database's own organization.
-- **Include order is dependency order;** the include manifest doubles as the table of contents for the whole schema.
-- **Document inline.** `COMMENT ON` statements live in the same file as the object, explaining *what* and *why* — especially for non-obvious behavior.
-- **Descriptive aliases** (the singular of the table name, not single letters). Follow the database's own naming idioms for session-context getters.
-- **Types and user-facing roles are data, not hardcoded constraints** — lookup tables with key/label/description, validated by foreign keys, extensible without schema changes.
-
-> **Why.** One-object-per-file plus dependency-ordered includes means the file tree is a faithful, navigable map of the database — and a focused file is one an agent can hold in context and edit reliably.
-
-**Enforcement:** SQL linter/formatter in CI where available; structure and commenting are reviewer judgment.
-
-## Article XIX — Delivery: Kubernetes, Per-PR Environments, Canary & Rollback
-
-*Implements: Article XII (deploy safety) and Article VIII (delivery) on Azure Kubernetes.*
-
-- **Local dev runs the full stack** via Docker Compose, one command, comprehensive — a first-class requirement.
-- **Images build in CI → GHCR and are promoted by digest** (Article VIII), moving preview → staging → production unchanged. Never rebuilt per environment.
-- **Per-PR ephemeral preview environments.** Each PR deploys to its own isolated namespace (or equivalent) on AKS for review, and is **torn down on merge/close**. This is the integration-test bed; it must be cheap to create and destroy.
-- **A persistent staging tier receives every merge to main**, so staging always reflects main's tip and cannot drift from it. Production promotes the digest staging validated, after a human decision.
-- **Kubernetes health gating.** Every workload defines **liveness, readiness, and startup probes** (wired to Article XVI endpoints), a **rolling update** strategy with bounded `maxUnavailable`/`maxSurge`, and a **PodDisruptionBudget**. Use a **HorizontalPodAutoscaler** for load.
-- **Progressive delivery to prod.** Canary or blue-green via the platform (e.g. Argo Rollouts / Flagger) with automated metric analysis tied to SLOs (Article IX); a failed canary aborts automatically.
-- **Rollback is first-class and rehearsed.** Because images are immutable and addressed by digest, rollback is redeploying the previously-good digest (`kubectl rollout undo` / abort the rollout). Verified before risky changes ship.
-- **Migrations are a separate, ordered step** in the pipeline, expand-safe (Article XVII), run before the code that depends on them — never bundled into the pod that needs the new schema.
-- **CI is the gate (Article VIII):** lint, typecheck, contract checks, tests, and security scans run on every change, and block merge in `enforced` mode. CI also **builds the image and publishes its provenance attestation**.
-- **Dev/prod parity & config from the environment.** Secrets from Key Vault (Article XIV); ports/config from env; dev-only tooling (pgTAP, test runners) never ships in production images.
-
-> **Why.** Immutable, digest-addressed artifacts plus health-gated progressive rollout plus a rehearsed rollback turn "deploy" from a held-breath event into a routine, reversible, low-blast-radius operation — which is the whole point of Article XII.
-
-**Enforcement:** the CI/CD pipeline and Kubernetes manifests are the enforcement (probes, PDB, rollout strategy, promotion flow defined as code); in `enforced` mode branch protection requires CI green before merge, and in `advisory` mode that requirement is carried by the declared discipline instead.
+**Owned by:** `cloud-delivery-aks` — a different runtime still delivers through health-gated, reversible, progressive rollout, promoting one artifact unchanged through preview → staging → production rather than rebuilding it per environment.
 
 ---
 
@@ -385,6 +294,7 @@ This constitution is built to travel.
   - A different runtime still has **observability mechanisms** (XVI), **zero-downtime schema/data evolution** (XVII), and **health-gated, reversible, progressive delivery** (XIX) — Kubernetes is this stack's instance; a PaaS or VM fleet substitutes its own.
   - Schema management still favors **idempotent, final-form definitions** (XVII) and a **navigable one-object-per-file layout** (XVIII).
 - **Scale the operating articles to the project's lifecycle.** A local-only or pre-launch project applies expand/contract, canary, and formal incident process as *write-the-rule-now, activate-on-trigger*; a project with real users in production activates them immediately. State which mode a project is in, in its first decision record.
+- **Declare the stack profile.** The first decision record names which stack skills the project adopts, and which Tier 2 articles it drops. An undeclared profile is the default one, which is rarely what a new project wants.
 - **When a project lacks a layer entirely** (a pure library, a CLI, a batch pipeline with no browser), drop the inapplicable article rather than contorting the project to fit it. Record the omission.
 - **Extending the Core:** new universal practices are added as Tier 1 articles with the same rigor — state the rule, the *why*, the named tension it resolves, and the **Enforcement** line. An article without an enforcement mechanism or an honest aspirational label does not belong here (Principle 7).
 - **Precedence is always:** User instructions → this Constitution → tool defaults. When a project's own `CLAUDE.md`/`AGENTS.md`/equivalent conflicts with this document, that project file wins — and the conflict is worth a decision record.
