@@ -152,4 +152,14 @@ assert_file_contains "$POOL/tests-as-a-control/SKILL.md" "An assertion that pass
 assert_file_contains "$POOL/ship-it/SKILL.md" "git checkout -b docs/archive-"
 assert_file_contains "$POOL/init-repo-CI/SKILL.md" "create-github-app-token"
 
+# Each TIER 2 article names a ROLE, not a canonical skill. Naming one skill tells
+# every project that skill owns its mechanism -- which is how AKS ended up
+# mandatory for projects that do not use Kubernetes.
+roles=$(grep '^\*\*Owned by:\*\*' "$CONST" | grep -c 'role' || true)
+if [[ "$roles" -eq 7 ]]; then
+  _pass
+else
+  _fail "only $roles of 7 TIER 2 articles name a role" "an article that names one skill makes that skill mandatory everywhere"
+fi
+
 report_results

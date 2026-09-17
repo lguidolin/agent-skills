@@ -237,49 +237,49 @@ Things will break. The constitution's stance is not "prevent all failure" but "f
 
 # TIER 2 — STACK PROFILE
 
-*The mechanism layer — a map, not the text. Each article names the Tier 1 principle it implements and the skill that owns its mechanism; that skill carries the detail and loads only when a task touches its stack. A project on different tooling therefore never has another stack's laws asserted at it. Swapping this tier (Article XX) means adopting different stack skills, not editing this document.*
+*The mechanism layer — a map, not the text. Each article names the Tier 1 principle it implements and the skill that owns its mechanism; that skill carries the detail and loads only when a task touches its stack. A project on different tooling therefore never has another stack's laws asserted at it. Each article names a **role** and the skill that currently fills it — the role is the durable part. A project declares which skills fill which roles in its first decision record (Article XX), and **drops outright any article whose role nothing in the project fills**: a project that deploys no service has no delivery role, and the article does not apply to it. Swapping this tier means adopting different stack skills, not editing this document.*
 
 ## Article XIII — The Data Path
 
 *Implements: Article X (defense in depth).*
 
-**Owned by:** `postgres-postgraphile-rls-and-sql` — a different data layer still names exactly one legal path for application data, and still passes session context as hints validated downstream rather than trusted as authorization.
+**Owned by:** the *data path* role — `postgres-postgraphile-rls-and-sql` fills it on PostGraphile over Postgres; another skill fills it elsewhere. A different data layer still names exactly one legal path for application data, and still passes session context as hints validated downstream rather than trusted as authorization.
 
 ## Article XIV — Security Mechanisms: RLS & Query Hardening
 
 *Implements: Article X (security & defense in depth), Article XI (DoS via unbounded queries).*
 
-**Owned by:** `postgres-postgraphile-rls-and-sql` — a different datastore still pushes final enforcement as low as it goes, so the store is the wall and the layers above are convenience; and still bounds query cost, depth and result size.
+**Owned by:** the *data-layer security* role — `postgres-postgraphile-rls-and-sql` fills it on Postgres; another skill fills it elsewhere. A different datastore still pushes final enforcement as low as it goes, so the store is the wall and the layers above are convenience; and still bounds query cost, depth and result size.
 
 ## Article XV — The Contract Layer
 
 *Implements: Article IV (tests as a control) and Article XI (interfaces are contracts), applied to the seams between layers.*
 
-**Owned by:** `graphql-contract-testing` — a different client or transport still defines its contract seams: one shared artifact, asserted on contract rather than string, breaking in both directions when it changes.
+**Owned by:** the *contract layer* role — `graphql-contract-testing` fills it on GraphQL; another skill fills it on a different transport. A different client or transport still defines its contract seams: one shared artifact, asserted on contract rather than string, breaking in both directions when it changes.
 
 ## Article XVI — Observability Mechanisms
 
 *Implements: Article IX (observability & operability).*
 
-**Owned by:** `observability-and-slos` — a different runtime still exposes health endpoints, emits structured logs carrying a correlation id, and publishes the metrics its SLOs are computed from.
+**Owned by:** the *observability mechanisms* role — `observability-and-slos` fills it. A different runtime still exposes health endpoints, emits structured logs carrying a correlation id, and publishes the metrics its SLOs are computed from.
 
 ## Article XVII — Migrations & Zero-Downtime Schema Change
 
 *Implements: Article XII (deploy safety) at the schema layer.*
 
-**Owned by:** `zero-downtime-migrations` — a different schema tool still evolves data by expand/contract, and still never bundles a destructive migration with the deploy that depends on it.
+**Owned by:** the *schema evolution* role — `zero-downtime-migrations` fills it on graphile-migrate; another skill fills it elsewhere. A different schema tool still evolves data by expand/contract, and still never bundles a destructive migration with the deploy that depends on it.
 
 ## Article XVIII — Schema Style
 
 *Implements: Article VI (code craft) at the schema layer.*
 
-**Owned by:** `postgres-postgraphile-rls-and-sql` — a different schema language still favours idempotent, final-form definitions in a navigable one-object-per-file layout.
+**Owned by:** the *schema style* role — `postgres-postgraphile-rls-and-sql` fills it for SQL; another skill fills it for a different schema language. A different schema language still favours idempotent, final-form definitions in a navigable one-object-per-file layout.
 
 ## Article XIX — Delivery
 
 *Implements: Article XII (deploy safety) and Article VIII (the verification gate) at the delivery layer.*
 
-**Owned by:** `cloud-delivery-aks` — a different runtime still delivers through health-gated, reversible, progressive rollout, promoting one artifact unchanged through preview → staging → production rather than rebuilding it per environment.
+**Owned by:** the *delivery* role — `cloud-delivery-aks` fills it on Kubernetes; another delivery skill fills it on a different runtime. A different runtime still delivers through health-gated, reversible, progressive rollout, promoting one artifact unchanged through preview → staging → production rather than rebuilding it per environment.
 
 ---
 
