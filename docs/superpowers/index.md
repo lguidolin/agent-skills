@@ -8,6 +8,7 @@
 |-----------|-------|------|--------------|
 | skills | Align house skills with superpowers workflows | 2026-08-27 | — |
 | skills | Define the preview to production deployment cycle | 2026-09-04 | 2026-08-27-superpowers-integration |
+| skills | Tier 2 becomes a pointer layer, not a second copy of the stack skills | 2026-09-16 | 2026-09-04-deployment-cycle |
 
 ## Superseded
 
