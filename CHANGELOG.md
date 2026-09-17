@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.10.0](https://github.com/lguidolin/agent-skills/compare/v0.9.0...v0.10.0) (2026-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* make Tier 2 a pointer layer to the stack skills ([#25](https://github.com/lguidolin/agent-skills/issues/25))
+
+### Code Refactoring
+
+* make Tier 2 a pointer layer to the stack skills ([#25](https://github.com/lguidolin/agent-skills/issues/25)) ([2d88147](https://github.com/lguidolin/agent-skills/commit/2d88147adfbcadd4f317e6bee3429bd16819c529))
+
 ## [0.9.0](https://github.com/lguidolin/agent-skills/compare/v0.8.0...v0.9.0) (2026-09-07)
 
 
