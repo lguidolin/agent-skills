@@ -101,8 +101,11 @@ design and disagrees with it:
 
 ## `ship-it` Phase 5 pushes to `main`, which its own rules forbid
 
-- **Status:** `open`
+- **Status:** `done`
 - **Raised:** 2026-09-06
+- **Resolved:** 2026-09-16 — Phase 5 step 4 now syncs `main`, branches, and opens
+  a PR for the archival, and waits for it before Phase 6 cleanup. Pinned by an
+  assertion.
 - **Trigger:** next time `ship-it` runs its post-merge archival, i.e. the next
   spec/plan that reaches merge.
 
@@ -128,6 +131,10 @@ whether Phases 5-6 are reordered so archival happens before the return to
 
 - **Status:** `open`
 - **Raised:** 2026-09-06
+- **Partly resolved:** 2026-09-16 — the house half landed: `tests-as-a-control`
+  now states that an assertion passing before the change is not a control, and
+  gives the delete-and-restore proof for tests that cannot be written first.
+  The plan-authoring half is unchanged and still belongs upstream.
 - **Trigger:** next plan that specifies test assertions, or next time
   `tests-as-a-control` is revised.
 

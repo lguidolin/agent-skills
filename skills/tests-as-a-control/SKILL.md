@@ -18,6 +18,13 @@ A test is a **control specimen**: it holds an expectation fixed so any change in
   contain and what a failure means once it exists. The rule holds whether or not
   that skill is installed.
 
+- **An assertion that passes before the change is not a control.** Watching it
+  fail is what proves it guards anything. An assertion satisfied by text or
+  behaviour that already existed will keep passing after the change is reverted,
+  and report success forever — it is decoration wearing a test's clothes. When a
+  test genuinely cannot be written first, prove it binds the other way: remove
+  the thing it guards, watch the suite go red, restore it, watch it go green.
+
 - **Structural change is verified by the unchanged suite.** A pure structural
   change — rename, move, split, extract, with no observable behavior change —
   requires **no new test**. Its gate is the opposite: *the entire existing suite
