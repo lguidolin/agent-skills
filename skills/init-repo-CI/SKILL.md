@@ -189,7 +189,13 @@ jobs:
         run: |
           # Trailer/footer forms only: a commit that merely mentions Claude or
           # Anthropic in prose is fine. Human Co-authored-by trailers are fine.
-          PAT='^[[:space:]]*Co-authored-by:.*(Claude|Anthropic|noreply@anthropic)|Generated with \[?(Claude|Anthropic)'
+          #
+          # The two alternatives carry different trust. "anthropic" as a whole word
+          # anywhere on the line is conclusive, because no person is named Anthropic
+          # -- the \b matters, or philanthropic and misanthropic match too. A model
+          # name only counts inside the display name, before the "<", so a human
+          # named Claude at a domain containing one of those words is not blocked.
+          PAT='^[[:space:]]*Co-authored-by:([^<]*Claude[^<]*\b(Code|Opus|Sonnet|Haiku|Fable)\b|.*\banthropic\b)|Generated with \[?(Claude|Anthropic)'
           fail=0
           if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | grep -Eiq "$PAT"; then
             echo "::error::AI attribution found in a commit message on this branch"
@@ -217,9 +223,16 @@ jobs:
           done
 ```
 
-**`No AI Attribution` ships blocking from day one** — it has no false-positive
-surface to validate (it matches trailer and footer forms, not prose), so it does
-not go through the graduation path below.
+**`No AI Attribution` ships blocking from day one** — it matches trailer and
+footer forms, not prose, so it does not go through the graduation path below.
+
+It does have a false-positive surface, and it is narrow but real: the check
+blocks a merge, so anything it wrongly matches stops a human contributor. The
+pattern above is written to avoid the cases found so far — a person named Claude,
+a domain containing "philanthropic" — but a contributor whose *surname* is Sonnet,
+Opus or Fable still matches. That is unfixable in ERE, which has no lookahead.
+If you need it airtight, lift the pattern into a small script with the false-positive
+cases as tests, and have the workflow call the script.
 
 **CI check graduation path:**
 1. Deploy with `continue-on-error: true` (informational, non-blocking)
